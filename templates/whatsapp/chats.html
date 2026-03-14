@@ -1,0 +1,501 @@
+{{ define "whatsapp/chats.html" }}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-gradient:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="gradient-bg text-white shadow-xl relative">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex flex-wrap items-center justify-between">
+                <a class="text-2xl font-bold flex items-center" href="/">
+                    <i class="fas fa-exchange-alt mr-3 text-yellow-300"></i>
+                    TeleTowa
+                </a>
+                <button class="lg:hidden glass-effect border border-white/30 px-3 py-2 rounded-lg hover:bg-white/20 transition-all" type="button" id="mobile-menu-button" aria-label="Tampilkan Menu">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
+                <div class="hidden lg:flex w-full lg:w-auto" id="mobile-menu">
+                    <ul class="flex flex-col lg:flex-row lg:space-x-2 mt-4 lg:mt-0">
+                        <li>
+                            <a class="block px-4 py-2 rounded-lg text-white font-medium hover:bg-white/20 transition-all flex items-center" href="/">
+                                <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a class="block px-4 py-2 rounded-lg text-white font-medium hover:bg-white/20 transition-all flex items-center" href="/telegram">
+                                <i class="fab fa-telegram mr-2"></i>Telegram
+                            </a>
+                        </li>
+                        <li>
+                            <a class="block px-4 py-2 rounded-lg text-white font-medium bg-white/30 backdrop-blur-sm flex items-center" href="/whatsapp">
+                                <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="mt-4 lg:mt-0 lg:ml-auto">
+                        <a href="/logout" class="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm text-white font-medium rounded-lg hover:bg-white/30 transition-all">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <div class="flex flex-wrap justify-between items-center mb-8">
+            <h2 class="text-3xl font-bold text-white flex items-center">
+                <i class="fab fa-whatsapp mr-3 text-green-400"></i>
+                Pilih Kontak WhatsApp
+            </h2>
+            <a href="/whatsapp" class="glass-effect px-6 py-3 text-white font-medium rounded-xl hover:bg-white/20 transition-all flex items-center card-hover">
+                <i class="fas fa-arrow-left mr-2"></i>Kembali
+            </a>
+        </div>
+        
+        {{ if .Error }}
+        <div class="glass-effect bg-red-500/20 border border-red-400/30 text-red-100 px-6 py-4 rounded-xl mb-8 flex items-center">
+            <i class="fas fa-exclamation-triangle mr-3 text-red-400"></i>
+            <div>
+                <strong>Error:</strong> {{ .Error }}
+            </div>
+        </div>
+        {{ else }}
+        
+        <!-- Filter and Search Section -->
+        <div class="glass-effect rounded-xl shadow-xl p-6 mb-8 card-hover">
+            <div class="flex flex-col md:flex-row justify-between mb-4 gap-4">
+                <div class="relative flex-grow">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-300"></i>
+                    </div>
+                    <input id="contact-search" type="text" class="pl-12 pr-4 py-3 w-full glass-effect border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent text-white placeholder-gray-300" placeholder="Cari kontak atau grup...">
+                </div>
+                <div class="flex space-x-4">
+                    <button id="view-all-btn" class="btn-gradient px-4 py-3 text-white rounded-xl transition-all flex items-center">
+                        <i class="fas fa-users mr-2"></i> Semua
+                    </button>
+                    <button id="view-private-btn" class="glass-effect px-4 py-3 text-white rounded-xl hover:bg-white/20 transition-all flex items-center">
+                        <i class="fas fa-user mr-2"></i> Kontak
+                    </button>
+                    <button id="view-groups-btn" class="glass-effect px-4 py-3 text-white rounded-xl hover:bg-white/20 transition-all flex items-center">
+                        <i class="fas fa-users mr-2"></i> Grup
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center mt-4">
+                <div class="text-sm text-gray-200">
+                    <span id="selected-count" class="font-semibold text-green-400">0</span> kontak terpilih
+                </div>
+                <button id="refresh-btn" class="btn-gradient px-6 py-3 text-white rounded-xl hover:shadow-lg transition-all flex items-center">
+                    <i class="fas fa-sync-alt mr-2"></i> Refresh Kontak
+                </button>
+            </div>
+        </div>
+        
+        <!-- Contacts Section -->
+        <div id="contacts-container" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Chat Pribadi -->
+            <div id="private-chats" class="glass-effect rounded-xl shadow-xl p-6 card-hover">
+                <h3 class="text-xl font-semibold mb-6 flex items-center text-white">
+                    <i class="fas fa-user mr-3 text-blue-400"></i> Kontak Pribadi
+                </h3>
+                
+                {{ if not .Chats }}
+                <div class="text-center py-12">
+                    <i class="fas fa-user-slash text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-400">Tidak ada kontak pribadi yang tersedia.</p>
+                    <p class="text-sm mt-2 text-gray-500">Kontak akan muncul setelah WhatsApp terhubung dan sinkronisasi selesai.</p>
+                </div>
+                {{ else }}
+                <div class="space-y-4">
+                    {{ range .Chats }}
+                    <div class="contact-card glass-effect border border-white/20 rounded-xl p-4 hover:bg-white/10 transition-all card-hover" data-name="{{ .title }}" data-type="private">
+                        <div class="flex items-center mb-3">
+                            <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 mr-4">
+                                <i class="fas fa-user text-lg"></i>
+                            </div>
+                            <div class="flex-grow">
+                                <h4 class="font-medium text-white">{{ .title }}</h4>
+                                <p class="text-sm text-gray-300">{{ .id }}</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            {{ if .selected }}
+                            <span class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-300 border border-green-400/30">
+                                <i class="fas fa-check-circle mr-2"></i> Terpilih
+                            </span>
+                            <button class="select-chat-btn px-4 py-2 bg-red-500/80 hover:bg-red-500 text-white text-sm rounded-lg transition-all flex items-center" 
+                                    data-id="{{ .id }}" 
+                                    data-type="{{ .type }}" 
+                                    data-action="unselect">
+                                <i class="fas fa-times mr-2"></i> Batalkan
+                            </button>
+                            {{ else }}
+                            <span class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-300 border border-gray-400/30">
+                                <i class="fas fa-circle mr-2"></i> Tidak Dipilih
+                            </span>
+                            <button class="select-chat-btn px-4 py-2 bg-green-500/80 hover:bg-green-500 text-white text-sm rounded-lg transition-all flex items-center" 
+                                    data-id="{{ .id }}" 
+                                    data-type="{{ .type }}" 
+                                    data-action="select">
+                                <i class="fas fa-plus mr-2"></i> Pilih
+                            </button>
+                            {{ end }}
+                        </div>
+                    </div>
+                    {{ end }}
+                </div>
+                {{ end }}
+            </div>
+            
+            <!-- Grup -->
+            <div id="group-chats" class="glass-effect rounded-xl shadow-xl p-6 card-hover">
+                <h3 class="text-xl font-semibold mb-6 flex items-center text-white">
+                    <i class="fas fa-users mr-3 text-green-400"></i> Grup
+                </h3>
+                
+                {{ if not .Groups }}
+                <div class="text-center py-12">
+                    <i class="fas fa-users-slash text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-400">Tidak ada grup yang tersedia.</p>
+                    <p class="text-sm mt-2 text-gray-500">Grup akan muncul setelah WhatsApp terhubung dan sinkronisasi selesai.</p>
+                </div>
+                {{ else }}
+                <div class="space-y-4">
+                    {{ range .Groups }}
+                    <div class="contact-card glass-effect border border-white/20 rounded-xl p-4 hover:bg-white/10 transition-all card-hover" data-name="{{ .title }}" data-type="group">
+                        <div class="flex items-center mb-3">
+                            <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 mr-4">
+                                <i class="fas fa-users text-lg"></i>
+                            </div>
+                            <div class="flex-grow">
+                                <h4 class="font-medium text-white">{{ .title }}</h4>
+                                <p class="text-sm text-gray-300">{{ .id }}</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            {{ if .selected }}
+                            <span class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-300 border border-green-400/30">
+                                <i class="fas fa-check-circle mr-2"></i> Terpilih
+                            </span>
+                            <button class="select-chat-btn px-4 py-2 bg-red-500/80 hover:bg-red-500 text-white text-sm rounded-lg transition-all flex items-center" 
+                                    data-id="{{ .id }}" 
+                                    data-type="{{ .type }}" 
+                                    data-action="unselect">
+                                <i class="fas fa-times mr-2"></i> Batalkan
+                            </button>
+                            {{ else }}
+                            <span class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-300 border border-gray-400/30">
+                                <i class="fas fa-circle mr-2"></i> Tidak Dipilih
+                            </span>
+                            <button class="select-chat-btn px-4 py-2 bg-green-500/80 hover:bg-green-500 text-white text-sm rounded-lg transition-all flex items-center" 
+                                    data-id="{{ .id }}" 
+                                    data-type="{{ .type }}" 
+                                    data-action="select">
+                                <i class="fas fa-plus mr-2"></i> Pilih
+                            </button>
+                            {{ end }}
+                        </div>
+                    </div>
+                    {{ end }}
+                </div>
+                {{ end }}
+            </div>
+        </div>
+        
+        <!-- Empty State -->
+        <div id="no-results" class="hidden glass-effect rounded-xl shadow-xl p-12 text-center card-hover">
+            <i class="fas fa-search text-6xl text-gray-400 mb-6"></i>
+            <h3 class="text-xl font-medium text-white mb-4">Tidak ada kontak yang ditemukan</h3>
+            <p class="text-gray-300">Coba ubah kata kunci pencarian atau filter yang digunakan.</p>
+        </div>
+        {{ end }}
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Modern notification system
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-green-500/90' : 'bg-red-500/90';
+            const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
+            
+            notification.className = `glass-effect ${bgColor} text-white px-6 py-4 rounded-xl shadow-xl transform translate-x-full transition-all duration-300 flex items-center min-w-80`;
+            notification.innerHTML = `
+                <i class="${icon} mr-3 text-lg"></i>
+                <span class="flex-1">${message}</span>
+                <button onclick="this.parentElement.remove()" class="ml-3 hover:bg-white/20 rounded-lg p-1 transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 5000);
+        }
+        
+        // Setup filtering and searching
+        document.addEventListener('DOMContentLoaded', function() {
+            // Count selected contacts
+            const updateSelectedCount = function() {
+                const selectedCount = document.getElementById('selected-count');
+                const selectedItems = document.querySelectorAll('.bg-green-500\/20.text-green-300').length;
+                selectedCount.innerText = selectedItems;
+                
+                if (selectedItems > 0) {
+                    showNotification(`${selectedItems} kontak berhasil dipilih`, 'success');
+                }
+            };
+            
+            updateSelectedCount();
+            
+            const searchInput = document.getElementById('contact-search');
+            const viewAllBtn = document.getElementById('view-all-btn');
+            const viewPrivateBtn = document.getElementById('view-private-btn');
+            const viewGroupsBtn = document.getElementById('view-groups-btn');
+            const privateChats = document.getElementById('private-chats');
+            const groupChats = document.getElementById('group-chats');
+            const noResults = document.getElementById('no-results');
+            const contactCards = document.querySelectorAll('.contact-card');
+            const refreshBtn = document.getElementById('refresh-btn');
+            
+            // Filter contacts based on search input
+            function filterContacts() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                let visibleCount = 0;
+                
+                contactCards.forEach(card => {
+                    const name = card.dataset.name.toLowerCase();
+                    const type = card.dataset.type;
+                    
+                    // Check if card matches current filter (type and search term)
+                    let typeMatch = true;
+                    if (viewPrivateBtn.classList.contains('bg-blue-600') && type !== 'private') {
+                        typeMatch = false;
+                    } else if (viewGroupsBtn.classList.contains('bg-blue-600') && type !== 'group') {
+                        typeMatch = false;
+                    }
+                    
+                    const searchMatch = name.includes(searchTerm);
+                    
+                    if (typeMatch && searchMatch) {
+                        card.classList.remove('hidden');
+                        visibleCount++;
+                    } else {
+                        card.classList.add('hidden');
+                    }
+                });
+                
+                // Show/hide no results message
+                if (visibleCount === 0) {
+                    privateChats.classList.add('hidden');
+                    groupChats.classList.add('hidden');
+                    noResults.classList.remove('hidden');
+                } else {
+                    noResults.classList.add('hidden');
+                    
+                    // Show/hide sections based on filter
+                    if (viewAllBtn.classList.contains('bg-blue-600')) {
+                        privateChats.classList.remove('hidden');
+                        groupChats.classList.remove('hidden');
+                    } else if (viewPrivateBtn.classList.contains('bg-blue-600')) {
+                        privateChats.classList.remove('hidden');
+                        groupChats.classList.add('hidden');
+                    } else if (viewGroupsBtn.classList.contains('bg-blue-600')) {
+                        privateChats.classList.add('hidden');
+                        groupChats.classList.remove('hidden');
+                    }
+                }
+            }
+            
+            // Search input event
+            searchInput.addEventListener('input', filterContacts);
+            
+            // View filter buttons with modern UI feedback
+            function resetButtonStyles() {
+                [viewAllBtn, viewPrivateBtn, viewGroupsBtn].forEach(btn => {
+                    btn.classList.remove('btn-gradient');
+                    btn.classList.add('glass-effect', 'text-white', 'hover:bg-white/20');
+                });
+            }
+            
+            viewAllBtn.addEventListener('click', function() {
+                resetButtonStyles();
+                this.classList.remove('glass-effect', 'hover:bg-white/20');
+                this.classList.add('btn-gradient');
+                filterContacts();
+                showNotification('Menampilkan semua kontak', 'success');
+            });
+            
+            viewPrivateBtn.addEventListener('click', function() {
+                resetButtonStyles();
+                this.classList.remove('glass-effect', 'hover:bg-white/20');
+                this.classList.add('btn-gradient');
+                filterContacts();
+                showNotification('Menampilkan kontak pribadi', 'success');
+            });
+            
+            viewGroupsBtn.addEventListener('click', function() {
+                resetButtonStyles();
+                this.classList.remove('glass-effect', 'hover:bg-white/20');
+                this.classList.add('btn-gradient');
+                filterContacts();
+                showNotification('Menampilkan grup', 'success');
+            });
+            
+            // Refresh contacts with loading indicator
+            refreshBtn.addEventListener('click', function() {
+                const originalHTML = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memuat ulang...';
+                this.classList.add('opacity-60');
+                
+                showNotification('Memuat ulang daftar kontak...', 'success');
+                
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            });
+            
+            // Handle chat selection with modern UI feedback
+            const selectButtons = document.querySelectorAll('.select-chat-btn');
+            
+            selectButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const type = this.getAttribute('data-type');
+                    const action = this.getAttribute('data-action');
+                    
+                    // Show loading state
+                    const originalHTML = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memproses...';
+                    this.classList.add('opacity-60');
+                    this.disabled = true;
+                    
+                    // Kirim request ke server
+                    fetch('/whatsapp/select-chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            chat_id: id,
+                            chat_type: type,
+                            action: action
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update card UI without reloading
+                            const card = this.closest('.contact-card');
+                            const statusBadge = card.querySelector('span');
+                            
+                            if (action === 'select') {
+                                // Update to selected state
+                                statusBadge.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Terpilih';
+                                statusBadge.className = 'inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-green-500/20 text-green-300 border border-green-400/30';
+                                
+                                this.innerHTML = '<i class="fas fa-times mr-2"></i> Batalkan';
+                                this.className = 'select-chat-btn px-4 py-2 bg-red-500/80 hover:bg-red-500 text-white text-sm rounded-lg transition-all flex items-center';
+                                this.setAttribute('data-action', 'unselect');
+                                showNotification(`Kontak ${type === 'private' ? 'pribadi' : 'grup'} berhasil dipilih`, 'success');
+                            } else {
+                                // Update to unselected state
+                                statusBadge.innerHTML = '<i class="fas fa-circle mr-2"></i> Tidak Dipilih';
+                                statusBadge.className = 'inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-300 border border-gray-400/30';
+                                
+                                this.innerHTML = '<i class="fas fa-plus mr-2"></i> Pilih';
+                                this.className = 'select-chat-btn px-4 py-2 bg-green-500/80 hover:bg-green-500 text-white text-sm rounded-lg transition-all flex items-center';
+                                this.setAttribute('data-action', 'select');
+                                showNotification(`Kontak ${type === 'private' ? 'pribadi' : 'grup'} berhasil dibatalkan`, 'success');
+                            }
+                            
+                            // Update selected count
+                            updateSelectedCount();
+                        } else {
+                            showNotification(data.message || 'Terjadi kesalahan saat memproses permintaan', 'error');
+                            this.innerHTML = originalHTML;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showNotification('Terjadi kesalahan koneksi', 'error');
+                        this.innerHTML = originalHTML;
+                    })
+                    .finally(() => {
+                        this.classList.remove('opacity-60');
+                        this.disabled = false;
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+{{ end }}

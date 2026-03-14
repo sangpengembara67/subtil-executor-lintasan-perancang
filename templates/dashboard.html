@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.title}}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'shimmer': 'shimmer 2s linear infinite',
+                        'beam': 'beam 2s ease-in-out infinite',
+                        'border-beam': 'border-beam 2s linear infinite',
+                        'gradient': 'gradient 6s ease infinite',
+                        'ripple': 'ripple 0.6s linear',
+                        'magic-card': 'magic-card 6s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        shimmer: {
+                            from: { backgroundPosition: '0 0' },
+                            to: { backgroundPosition: '-200% 0' }
+                        },
+                        beam: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(100%)' }
+                        },
+                        'border-beam': {
+                            '0%': { 'offset-distance': '0%' },
+                            '100%': { 'offset-distance': '100%' }
+                        },
+                        gradient: {
+                            '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' },
+                            '50%': { 'background-size': '200% 200%', 'background-position': 'right center' }
+                        },
+                        ripple: {
+                            '0%': { transform: 'scale(0)', opacity: '1' },
+                            '100%': { transform: 'scale(4)', opacity: '0' }
+                        },
+                        'magic-card': {
+                            '0%, 100%': { transform: 'rotate(0deg)' },
+                            '25%': { transform: 'rotate(1deg)' },
+                            '75%': { transform: 'rotate(-1deg)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js CSS tidak diperlukan untuk Chart.js v3+ -->
+    <style>
+        :root {
+            --primary-color: #6b7280;
+            --secondary-color: #9ca3af;
+            --accent-color: #10b981;
+            --soft-blue: #60a5fa;
+            --soft-green: #34d399;
+            --soft-purple: #a78bfa;
+            --warm-gray: #f9fafb;
+            --text-primary: #374151;
+            --text-secondary: #6b7280;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%);
+        }
+        
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #1f2937 0%, #374151 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .soft-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .sidebar {
+            transition: transform 0.3s ease;
+        }
+        .sidebar-hidden {
+            transform: translateX(-100%);
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                z-index: 50;
+                height: 100vh;
+            }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .pulse-dot {
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+        
+        .line-clamp-1 {
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 1;
+        }
+        
+        .line-clamp-2 {
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+        
+        /* Additional responsive utilities */
+        @media (max-width: 640px) {
+            .mobile-scroll {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+        
+        /* Smooth transitions for all interactive elements */
+        * {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        /* Better focus states for accessibility */
+        button:focus, input:focus, select:focus {
+            outline: 2px solid #3B82F6;
+            outline-offset: 2px;
+        }
+        
+        /* MagicUI Effects */
+        .shimmer-button {
+            background: linear-gradient(110deg, #000103 45%, #1e2631 55%, #000103);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+            color: white;
+        }
+        
+        .magic-card {
+            background: linear-gradient(45deg, #f0f9ff, #e0f2fe, #f0fdf4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .magic-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: beam 2s infinite;
+        }
+        
+        .border-beam {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .border-beam::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: inherit;
+            padding: 2px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6);
+            background-size: 200% 100%;
+            animation: border-beam 2s linear infinite;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+        }
+        
+        .animated-gradient-text {
+            background: linear-gradient(-45deg, #3b82f6, #8b5cf6, #06b6d4, #10b981);
+            background-size: 400% 400%;
+            animation: gradient 6s ease infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .ripple-bg {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ripple-bg::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.1);
+            transform: translate(-50%, -50%);
+            animation: ripple 4s infinite;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen relative overflow-hidden">
+    <!-- Ripple Background Effect -->
+    <div class="ripple-background"></div>
+    <!-- Mobile Menu Overlay -->
+    <div id="mobileOverlay" class="hidden fixed inset-0 bg-black bg-opacity-30 z-40 md:hidden transition-opacity duration-300"></div>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar sidebar-hidden md:translate-x-0 fixed md:static w-64 md:w-64 sm:w-56 h-full sidebar-gradient text-white z-50 soft-shadow transition-all duration-300 ease-in-out">
+        <div class="p-4 md:p-6">
+            <div class="flex items-center justify-between mb-6 md:mb-8">
+                <div class="flex items-center">
+                    <i class="fas fa-comments text-xl md:text-2xl mr-2 md:mr-3"></i>
+                    <h1 class="text-lg md:text-xl font-bold">TeleToWa</h1>
+                </div>
+                <button id="closeSidebar" class="md:hidden text-white hover:text-gray-300 p-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition-all duration-300">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <nav class="space-y-3">
+                <a href="#dashboard" class="nav-link flex items-center p-4 rounded-xl hover:bg-white hover:bg-opacity-15 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <i class="fas fa-tachometer-alt mr-4 text-lg group-hover:scale-110 transition-transform duration-300"></i>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a href="#schedules" class="nav-link flex items-center p-4 rounded-xl hover:bg-white hover:bg-opacity-15 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <i class="fas fa-calendar-alt mr-4 text-lg group-hover:scale-110 transition-transform duration-300"></i>
+                    <span class="font-medium">Schedules</span>
+                </a>
+                <a href="#analytics" class="nav-link flex items-center p-4 rounded-xl hover:bg-white hover:bg-opacity-15 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <i class="fas fa-chart-bar mr-4 text-lg group-hover:scale-110 transition-transform duration-300"></i>
+                    <span class="font-medium">Analytics</span>
+                </a>
+                <a href="#settings" class="nav-link flex items-center p-4 rounded-xl hover:bg-white hover:bg-opacity-15 hover:backdrop-blur-sm transition-all duration-300 group">
+                    <i class="fas fa-cog mr-4 text-lg group-hover:scale-110 transition-transform duration-300"></i>
+                    <span class="font-medium">Settings</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="absolute bottom-0 w-full p-4 md:p-6">
+            <div class="glass-effect rounded-lg p-3 md:p-4">
+                <div class="flex items-center mb-2">
+                    <i class="fas fa-user-circle text-xl md:text-2xl mr-2 md:mr-3"></i>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-sm md:text-base truncate">{{.user.Username}}</p>
+                        <p class="text-xs md:text-sm opacity-75">Administrator</p>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="w-full mt-3 bg-red-500 hover:bg-red-600 text-white py-2 px-3 md:px-4 rounded-lg transition duration-300 text-sm md:text-base">
+                    <i class="fas fa-sign-out-alt mr-1 md:mr-2"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="md:ml-64 min-h-screen transition-all duration-300 ease-in-out">
+        <!-- Header -->
+        <header class="glass-effect border-b border-white border-opacity-20 backdrop-blur-xl sticky top-0 z-40">
+            <div class="flex items-center justify-between p-4 md:p-6">
+                <div class="flex items-center">
+                    <button id="mobileMenuBtn" class="md:hidden text-gray-700 hover:text-gray-900 mr-4 p-2 rounded-lg hover:bg-white hover:bg-opacity-50 transition-all duration-300">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <h2 id="pageTitle" class="text-xl md:text-3xl font-bold animated-gradient-text">Dashboard</h2>
+                </div>
+                <div class="flex items-center space-x-2 md:space-x-6">
+                    <div class="flex items-center bg-green-50 px-2 md:px-4 py-1 md:py-2 rounded-full">
+                        <span class="pulse-dot w-2 md:w-3 h-2 md:h-3 bg-green-500 rounded-full mr-2 md:mr-3"></span>
+                        <span class="text-xs md:text-sm font-medium text-green-700 hidden sm:inline">System Online</span>
+                        <span class="text-xs md:text-sm font-medium text-green-700 sm:hidden">Online</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <main class="p-4 md:p-6">
+            <!-- Dashboard View -->
+            <div id="dashboardView" class="view">
+                <!-- Stats Cards -->
+                <div class="relative">
+                    <!-- Animated Beams -->
+                    <div class="absolute inset-0 pointer-events-none">
+                        <div class="animated-beam" style="top: 50%; left: 25%; width: 25%; height: 2px;"></div>
+                        <div class="animated-beam" style="top: 50%; left: 50%; width: 25%; height: 2px;"></div>
+                        <div class="animated-beam" style="top: 50%; left: 75%; width: 25%; height: 2px;"></div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 md:mb-8 relative z-10">
+                    <div class="magic-card glass-effect rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-6 card-hover border border-blue-100">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 min-w-0 pr-2">
+                                <p class="text-xs sm:text-sm font-medium text-gray-500 mb-1 sm:mb-2 truncate">Active Schedules</p>
+                                <p id="activeSchedulesCount" class="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">{{.status.active_schedules}}</p>
+                                <div class="flex items-center mt-1 sm:mt-2">
+                                    <i class="fas fa-arrow-up text-green-500 text-xs mr-1"></i>
+                                    <span class="text-xs text-green-600 font-medium">+2.5%</span>
+                                </div>
+                            </div>
+                            <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl md:rounded-2xl flex-shrink-0">
+                                <i class="fas fa-calendar-check text-blue-500 text-lg sm:text-xl md:text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="magic-card glass-effect rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-6 card-hover border border-green-100">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 min-w-0 pr-2">
+                                <p class="text-xs sm:text-sm font-medium text-gray-500 mb-1 sm:mb-2 truncate">Messages Analyzed</p>
+                                <p id="messagesAnalyzed" class="text-xl sm:text-2xl md:text-3xl font-bold text-green-600">0</p>
+                                <div class="flex items-center mt-1 sm:mt-2">
+                                    <i class="fas fa-arrow-up text-green-500 text-xs mr-1"></i>
+                                    <span class="text-xs text-green-600 font-medium">+12.3%</span>
+                                </div>
+                            </div>
+                            <div class="bg-gradient-to-br from-green-50 to-green-100 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl md:rounded-2xl flex-shrink-0">
+                                <i class="fas fa-comments text-green-500 text-lg sm:text-xl md:text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="magic-card glass-effect rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-6 card-hover border border-purple-100">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 min-w-0 pr-2">
+                                <p class="text-xs sm:text-sm font-medium text-gray-500 mb-1 sm:mb-2 truncate">Stock Mentions</p>
+                                <p id="stockMentions" class="text-xl sm:text-2xl md:text-3xl font-bold text-purple-600">0</p>
+                                <div class="flex items-center mt-1 sm:mt-2">
+                                    <i class="fas fa-minus text-gray-400 text-xs mr-1"></i>
+                                    <span class="text-xs text-gray-500 font-medium">0%</span>
+                                </div>
+                            </div>
+                            <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl md:rounded-2xl flex-shrink-0">
+                                <i class="fas fa-chart-line text-purple-500 text-lg sm:text-xl md:text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="magic-card glass-effect rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-6 card-hover border border-emerald-100">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 min-w-0 pr-2">
+                                <p class="text-xs sm:text-sm font-medium text-gray-500 mb-1 sm:mb-2 truncate">System Status</p>
+                                <p class="text-base sm:text-lg md:text-xl font-bold text-emerald-600">{{if .status.running}}Online{{else}}Offline{{end}}</p>
+                                <div class="flex items-center mt-1 sm:mt-2">
+                                    <div class="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></div>
+                                    <span class="text-xs text-emerald-600 font-medium hidden sm:inline">All systems operational</span>
+                                    <span class="text-xs text-emerald-600 font-medium sm:hidden">Operational</span>
+                                </div>
+                            </div>
+                            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl md:rounded-2xl flex-shrink-0">
+                                <i class="fas fa-server text-emerald-500 text-lg sm:text-xl md:text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                 </div>
+
+                 <!-- Recent Activity -->
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
+                    <div class="border-beam glass-effect rounded-xl lg:rounded-2xl p-4 md:p-8 border border-gray-100">
+                        <div class="flex items-center mb-4 md:mb-6">
+                            <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-xl mr-4">
+                                <i class="fas fa-clock text-blue-500 text-lg"></i>
+                            </div>
+                            <h3 class="text-lg md:text-xl font-bold text-gray-800">Recent Activity</h3>
+                        </div>
+                        <div id="recentActivity" class="space-y-3 md:space-y-4">
+                            <div class="flex items-center p-3 md:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg md:rounded-xl border border-blue-100">
+                                <div class="bg-blue-500 p-2 rounded-lg mr-3 md:mr-4 flex-shrink-0">
+                                    <i class="fas fa-info-circle text-white text-sm"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-semibold text-gray-800 truncate">System started</p>
+                                    <p class="text-xs text-gray-500 mt-1">Just now</p>
+                                </div>
+                                <div class="text-xs text-blue-600 font-medium flex-shrink-0 ml-2">Active</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-beam glass-effect rounded-xl lg:rounded-2xl p-4 md:p-8 border border-gray-100">
+                        <div class="flex items-center mb-4 md:mb-6">
+                            <div class="bg-gradient-to-br from-green-50 to-green-100 p-3 rounded-xl mr-4">
+                                <i class="fas fa-calendar-alt text-green-500 text-lg"></i>
+                            </div>
+                            <h3 class="text-lg md:text-xl font-bold text-gray-800">Upcoming Schedules</h3>
+                        </div>
+                        <div id="upcomingSchedules" class="space-y-3 md:space-y-4">
+                            <div class="text-center py-6 md:py-8">
+                                <div class="bg-gray-100 p-3 md:p-4 rounded-full w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 md:mb-4 flex items-center justify-center">
+                                    <i class="fas fa-calendar-plus text-gray-400 text-lg md:text-xl"></i>
+                                </div>
+                                <p class="text-gray-500 text-sm">No upcoming schedules</p>
+                                <p class="text-gray-400 text-xs mt-1">Add a schedule to get started</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedules View -->
+            <div id="schedulesView" class="view hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-8 gap-4">
+                    <div>
+                        <h3 class="text-xl md:text-2xl font-bold animated-gradient-text">Schedule Management</h3>
+                        <p class="text-gray-500 mt-1">Manage your automated message schedules</p>
+                    </div>
+                    <button id="addScheduleBtn" class="shimmer-button px-4 md:px-6 py-2 md:py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-semibold text-sm md:text-base w-full sm:w-auto">
+                        <i class="fas fa-plus mr-2"></i>
+                        Add Schedule
+                    </button>
+                </div>
+
+                <!-- Mobile Card View -->
+                <div class="block md:hidden mb-6">
+                    <div id="schedulesTableMobile" class="space-y-4">
+                        <!-- Will be populated by JavaScript -->
+                        <div class="text-center py-12">
+                            <div class="bg-gray-50 p-6 rounded-xl">
+                                <i class="fas fa-calendar-plus text-gray-300 text-4xl mb-4"></i>
+                                <p class="text-gray-500 font-medium">No schedules found</p>
+                                <p class="text-gray-400 text-sm mt-1">Create your first schedule to get started</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desktop Table View -->
+                <div class="hidden md:block glass-effect rounded-2xl p-8 border border-gray-100">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b-2 border-gray-100">
+                                    <th class="text-left py-4 px-6 font-bold text-gray-700 text-sm uppercase tracking-wider">Chat ID</th>
+                                    <th class="text-left py-4 px-6 font-bold text-gray-700 text-sm uppercase tracking-wider">Platform</th>
+                                    <th class="text-left py-4 px-6 font-bold text-gray-700 text-sm uppercase tracking-wider">Time</th>
+                                    <th class="text-left py-4 px-6 font-bold text-gray-700 text-sm uppercase tracking-wider">Days</th>
+                                    <th class="text-left py-4 px-6 font-bold text-gray-700 text-sm uppercase tracking-wider">Status</th>
+                                    <th class="text-left py-4 px-6 font-bold text-gray-700 text-sm uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedulesTable" class="divide-y divide-gray-100">
+                                <!-- Will be populated by JavaScript -->
+                                <tr>
+                                    <td colspan="6" class="text-center py-12">
+                                        <div class="bg-gray-50 p-6 rounded-xl">
+                                            <i class="fas fa-calendar-plus text-gray-300 text-4xl mb-4"></i>
+                                            <p class="text-gray-500 font-medium">No schedules found</p>
+                                            <p class="text-gray-400 text-sm mt-1">Create your first schedule to get started</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics View -->
+            <div id="analyticsView" class="view hidden">
+                <div class="mb-6 md:mb-8">
+                    <div class="mb-4 md:mb-6">
+                        <h3 class="text-xl md:text-2xl font-bold animated-gradient-text">Analytics Dashboard</h3>
+                        <p class="text-gray-500 mt-1 text-sm md:text-base">Analyze your chat data and stock mentions</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-3 md:gap-4">
+                        <button id="runChatAnalysis" class="shimmer-button px-4 md:px-6 py-2.5 md:py-3 rounded-lg md:rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-semibold text-sm md:text-base">
+                            <i class="fas fa-chart-line mr-2"></i>
+                            Run Chat Analysis
+                        </button>
+                        <button id="runStockAnalysis" class="shimmer-button px-4 md:px-6 py-2.5 md:py-3 rounded-lg md:rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-semibold text-sm md:text-base">
+                            <i class="fas fa-chart-bar mr-2"></i>
+                            Run Stock Analysis
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 xl:gap-8 mb-6 md:mb-8">
+                    <div class="glass-effect rounded-xl lg:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
+                        <div class="flex items-center mb-4 md:mb-6">
+                            <div class="bg-gradient-to-r from-green-400 to-green-500 p-2 md:p-3 rounded-lg md:rounded-xl mr-3 md:mr-4">
+                                <i class="fas fa-comments text-white text-lg md:text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-base md:text-lg lg:text-xl font-bold text-gray-800">Message Analysis</h4>
+                                <p class="text-gray-500 text-xs md:text-sm">Message patterns and insights</p>
+                            </div>
+                        </div>
+                        <div class="h-40 md:h-48 lg:h-64">
+                            <canvas id="messageChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass-effect rounded-xl lg:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
+                        <div class="flex items-center mb-4 md:mb-6">
+                            <div class="bg-gradient-to-r from-purple-400 to-purple-500 p-2 md:p-3 rounded-lg md:rounded-xl mr-3 md:mr-4">
+                                <i class="fas fa-chart-pie text-white text-lg md:text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-base md:text-lg lg:text-xl font-bold text-gray-800">Stock Mentions</h4>
+                                <p class="text-gray-500 text-xs md:text-sm">Stock distribution chart</p>
+                            </div>
+                        </div>
+                        <div class="h-40 md:h-48 lg:h-64">
+                            <canvas id="stockChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 xl:gap-8">
+                    <div class="glass-effect rounded-xl lg:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
+                        <div class="flex items-center mb-4 md:mb-6">
+                            <div class="bg-gradient-to-r from-blue-400 to-blue-500 p-2 md:p-3 rounded-lg md:rounded-xl mr-3 md:mr-4">
+                                <i class="fas fa-chart-bar text-white text-lg md:text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-base md:text-lg lg:text-xl font-bold text-gray-800">Stock Mentions Analysis</h4>
+                                <p class="text-gray-500 text-xs md:text-sm">Top mentioned stocks</p>
+                            </div>
+                        </div>
+                        <div class="h-40 md:h-48 lg:h-64">
+                            <canvas id="stockMentionsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass-effect rounded-xl lg:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
+                        <div class="flex items-center mb-4 md:mb-6">
+                            <div class="bg-gradient-to-r from-indigo-400 to-indigo-500 p-2 md:p-3 rounded-lg md:rounded-xl mr-3 md:mr-4">
+                                <i class="fas fa-chart-pie text-white text-lg md:text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-base md:text-lg lg:text-xl font-bold text-gray-800">Stock Sentiment</h4>
+                                <p class="text-gray-500 text-xs md:text-sm">Sentiment distribution</p>
+                            </div>
+                        </div>
+                        <div class="h-40 md:h-48 lg:h-64">
+                            <canvas id="stockSentimentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settingsView" class="view hidden">
+                <div class="mb-6 md:mb-8">
+                    <h3 class="text-xl md:text-2xl font-bold animated-gradient-text">Settings</h3>
+                    <p class="text-gray-500 mt-1 text-sm md:text-base">Manage your account and system preferences</p>
+                </div>
+                
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 xl:gap-8">
+                    <!-- Account Settings -->
+                    <div class="glass-effect rounded-xl lg:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
+                        <div class="flex items-center mb-4 md:mb-6">
+                            <div class="bg-gradient-to-r from-blue-400 to-blue-500 p-2 md:p-3 rounded-lg md:rounded-xl mr-3 md:mr-4">
+                                <i class="fas fa-user text-white text-lg md:text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-base md:text-lg lg:text-xl font-bold text-gray-800">Account Settings</h4>
+                                <p class="text-gray-500 text-xs md:text-sm">Update your profile information</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Change Username -->
+                        <div class="mb-6 md:mb-8">
+                            <h5 class="text-sm md:text-base lg:text-lg font-semibold text-gray-700 mb-3 md:mb-4">Change Username</h5>
+                            <form id="changeUsernameForm">
+                                <div class="mb-4 md:mb-6">
+                                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-2">New Username</label>
+                                    <input type="text" id="newUsername" class="w-full px-3 md:px-4 py-2.5 md:py-3 border border-gray-200 rounded-lg md:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm md:text-base" placeholder="Enter new username">
+                                </div>
+                                <button type="submit" class="shimmer-button px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-semibold text-sm md:text-base w-full sm:w-auto">
+                                    <i class="fas fa-save mr-2"></i>
+                                    Update Username
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Change Password -->
+                        <div>
+                            <h5 class="text-sm md:text-base lg:text-lg font-semibold text-gray-700 mb-3 md:mb-4">Change Password</h5>
+                            <form id="changePasswordForm">
+                                <div class="mb-3 md:mb-4">
+                                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-2">Current Password</label>
+                                    <input type="password" id="currentPassword" class="w-full px-3 md:px-4 py-2.5 md:py-3 border border-gray-200 rounded-lg md:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm md:text-base" placeholder="Enter current password">
+                                </div>
+                                <div class="mb-3 md:mb-4">
+                                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-2">New Password</label>
+                                    <input type="password" id="newPassword" class="w-full px-3 md:px-4 py-2.5 md:py-3 border border-gray-200 rounded-lg md:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm md:text-base" placeholder="Enter new password">
+                                </div>
+                                <div class="mb-4 md:mb-6">
+                                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+                                    <input type="password" id="confirmPassword" class="w-full px-3 md:px-4 py-2.5 md:py-3 border border-gray-200 rounded-lg md:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm md:text-base" placeholder="Confirm new password">
+                                </div>
+                                <button class="shimmer-button px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-semibold text-sm md:text-base w-full sm:w-auto">
+                                    <i class="fas fa-lock mr-2"></i>
+                                    Update Password
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- System Settings -->
+                    <div class="glass-effect rounded-xl lg:rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-100">
+                        <div class="flex items-center mb-4 md:mb-6">
+                            <div class="bg-gradient-to-r from-purple-400 to-purple-500 p-2 md:p-3 rounded-lg md:rounded-xl mr-3 md:mr-4">
+                                <i class="fas fa-cog text-white text-lg md:text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-base md:text-lg lg:text-xl font-bold text-gray-800">System Settings</h4>
+                                <p class="text-gray-500 text-xs md:text-sm">Configure system preferences</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4 md:space-y-6">
+                            <div class="flex items-center justify-between p-3 md:p-4 lg:p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg md:rounded-xl border border-gray-100">
+                                <div class="flex-1 min-w-0 mr-3">
+                                    <h6 class="font-semibold text-gray-800 mb-1 text-sm md:text-base">Auto Analysis</h6>
+                                    <p class="text-xs md:text-sm text-gray-500 line-clamp-2">Automatically analyze new messages</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                                    <input type="checkbox" class="sr-only peer" checked>
+                                    <div class="w-10 h-5 md:w-12 md:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 md:after:h-5 md:after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-500 peer-checked:to-blue-600"></div>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 md:p-4 lg:p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg md:rounded-xl border border-gray-100">
+                                <div class="flex-1 min-w-0 mr-3">
+                                    <h6 class="font-semibold text-gray-800 mb-1 text-sm md:text-base">Notifications</h6>
+                                    <p class="text-xs md:text-sm text-gray-500 line-clamp-2">Receive system notifications</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                                    <input type="checkbox" class="sr-only peer" checked>
+                                    <div class="w-10 h-5 md:w-12 md:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 md:after:h-5 md:after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-500 peer-checked:to-blue-600"></div>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 md:p-4 lg:p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg md:rounded-xl border border-gray-100">
+                                <div class="flex-1 min-w-0 mr-3">
+                                    <h6 class="font-semibold text-gray-800 mb-1 text-sm md:text-base">Dark Mode</h6>
+                                    <p class="text-xs md:text-sm text-gray-500 line-clamp-2">Switch to dark theme</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                                    <input type="checkbox" class="sr-only peer">
+                                    <div class="w-10 h-5 md:w-12 md:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 md:after:h-5 md:after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-500 peer-checked:to-blue-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Schedule Modal -->
+    <div id="scheduleModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="border-beam bg-white rounded-2xl p-4 md:p-8 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto shadow-2xl transform transition-all duration-300">
+            <div class="flex justify-between items-start mb-4 md:mb-6">
+                <div class="flex-1 pr-4">
+                    <h3 class="text-lg md:text-xl lg:text-2xl font-bold text-gray-800">Add New Schedule</h3>
+                    <p class="text-gray-500 text-xs md:text-sm mt-1">Create an automated message schedule</p>
+                </div>
+                <button id="closeModal" class="text-gray-400 hover:text-gray-600 p-2 rounded-xl hover:bg-gray-100 transition-all duration-300 flex-shrink-0">
+                    <i class="fas fa-times text-lg md:text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="scheduleForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Chat ID</label>
+                    <input type="text" id="chatId" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300" placeholder="Enter chat ID" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Platform</label>
+                    <select id="platform" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300" required>
+                        <option value="whatsapp">💬 WhatsApp</option>
+                        <option value="telegram">📱 Telegram</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Schedule Time</label>
+                    <input type="time" id="scheduleTime" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300" value="19:00" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Days of Week</label>
+                    <div class="grid grid-cols-7 gap-1 sm:gap-2">
+                        <label class="flex flex-col items-center p-1.5 sm:p-2 md:p-3 border-2 border-gray-200 rounded-lg sm:rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 group min-h-[2.5rem] sm:min-h-[3rem]">
+                            <input type="checkbox" value="1" class="day-checkbox sr-only" checked>
+                            <span class="text-xs sm:text-sm font-medium text-gray-600 group-hover:text-blue-600 text-center">Mon</span>
+                        </label>
+                        <label class="flex flex-col items-center p-1.5 sm:p-2 md:p-3 border-2 border-gray-200 rounded-lg sm:rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 group min-h-[2.5rem] sm:min-h-[3rem]">
+                            <input type="checkbox" value="2" class="day-checkbox sr-only" checked>
+                            <span class="text-xs sm:text-sm font-medium text-gray-600 group-hover:text-blue-600 text-center">Tue</span>
+                        </label>
+                        <label class="flex flex-col items-center p-1.5 sm:p-2 md:p-3 border-2 border-gray-200 rounded-lg sm:rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 group min-h-[2.5rem] sm:min-h-[3rem]">
+                            <input type="checkbox" value="3" class="day-checkbox sr-only" checked>
+                            <span class="text-xs sm:text-sm font-medium text-gray-600 group-hover:text-blue-600 text-center">Wed</span>
+                        </label>
+                        <label class="flex flex-col items-center p-1.5 sm:p-2 md:p-3 border-2 border-gray-200 rounded-lg sm:rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 group min-h-[2.5rem] sm:min-h-[3rem]">
+                            <input type="checkbox" value="4" class="day-checkbox sr-only" checked>
+                            <span class="text-xs sm:text-sm font-medium text-gray-600 group-hover:text-blue-600 text-center">Thu</span>
+                        </label>
+                        <label class="flex flex-col items-center p-1.5 sm:p-2 md:p-3 border-2 border-gray-200 rounded-lg sm:rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 group min-h-[2.5rem] sm:min-h-[3rem]">
+                            <input type="checkbox" value="5" class="day-checkbox sr-only" checked>
+                            <span class="text-xs sm:text-sm font-medium text-gray-600 group-hover:text-blue-600 text-center">Fri</span>
+                        </label>
+                        <label class="flex flex-col items-center p-1.5 sm:p-2 md:p-3 border-2 border-gray-200 rounded-lg sm:rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 group min-h-[2.5rem] sm:min-h-[3rem]">
+                            <input type="checkbox" value="6" class="day-checkbox sr-only">
+                            <span class="text-xs sm:text-sm font-medium text-gray-600 group-hover:text-blue-600 text-center">Sat</span>
+                        </label>
+                        <label class="flex flex-col items-center p-1.5 sm:p-2 md:p-3 border-2 border-gray-200 rounded-lg sm:rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 group min-h-[2.5rem] sm:min-h-[3rem]">
+                            <input type="checkbox" value="7" class="day-checkbox sr-only">
+                            <span class="text-xs sm:text-sm font-medium text-gray-600 group-hover:text-blue-600 text-center">Sun</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100 mt-6">
+                    <button type="button" id="cancelSchedule" class="order-2 sm:order-1 flex-1 px-4 py-3 border-2 border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 font-medium text-sm">
+                        Cancel
+                    </button>
+                    <button type="submit" class="order-1 sm:order-2 flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl font-medium text-sm">
+                        <i class="fas fa-plus mr-2"></i>
+                        Add Schedule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 left-4 right-4 sm:top-4 sm:right-4 sm:left-auto bg-white border border-gray-200 rounded-xl shadow-xl p-3 sm:p-4 transform translate-x-full transition-transform duration-300 z-50 max-w-sm sm:max-w-md mx-auto sm:mx-0">
+        <div class="flex items-start">
+            <div id="toastIcon" class="mr-3 flex-shrink-0 mt-0.5">
+                <!-- Icon will be inserted here -->
+            </div>
+            <div class="flex-1 min-w-0">
+                <p id="toastTitle" class="font-semibold text-gray-800 text-sm sm:text-base truncate"></p>
+                <p id="toastMessage" class="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2"></p>
+            </div>
+            <button id="toastClose" class="ml-3 text-gray-400 hover:text-gray-600 flex-shrink-0 p-1">
+                <i class="fas fa-times text-sm"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="/static/dashboard.js"></script>
+</body>
+</html>

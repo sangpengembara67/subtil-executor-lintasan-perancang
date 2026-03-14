@@ -1,0 +1,130 @@
+name: Go CI (Teletowa)
+
+on:
+    push:
+        branches: [master, main]
+    pull_request:
+        branches: [master, main]
+    schedule:
+        - cron: "0 */1 * * *"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+    build-ubuntu:
+        timeout-minutes: 50
+        runs-on: ${{ matrix.config.os }}
+        strategy:
+            matrix:
+                config:
+                    - {
+                          os: ubuntu-24.04,
+                          os_name: linux,
+                          arch: amd64,
+                          c: gcc-14,
+                          cpp: g++-14,
+                      }
+                    - {
+                          os: ubuntu-24.04-arm,
+                          os_name: linux,
+                          arch: arm64,
+                          c: gcc-14,
+                          cpp: g++-14,
+                      }
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.24"
+
+            - name: Build Go Project
+              run: |
+                  mkdir -p output
+                  # Build dengan GOOS dan GOARCH sesuai matrix, langsung dinamai format teletowa
+                  GOOS=${{ matrix.config.os_name }} GOARCH=${{ matrix.config.arch }} go build -v -o output/teletowa-${{ matrix.config.os_name }}-${{ matrix.config.arch }} .
+
+            - name: Run Custom Test Script (Linux)
+              run: |
+                  # Membersihkan format CRLF (Windows) menjadi LF (Linux)
+                  sed -i 's/\r$//' ./scripts/test-linux.sh
+
+                  # Memberikan akses dan menjalankan script
+                  chmod +x ./scripts/test-linux.sh
+                  ./scripts/test-linux.sh
+
+            - name: Upload artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: teletowa-ubuntu-${{ strategy.job-index }}
+                  path: output/teletowa-${{ matrix.config.os_name }}-${{ matrix.config.arch }}
+                  retention-days: 1
+    build-windows:
+        timeout-minutes: 50
+        runs-on: ${{ matrix.config.os }}
+
+        strategy:
+            matrix:
+                config:
+                    - { os: windows-latest }
+                    - { os: windows-2022 }
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.24"
+
+            - name: Build Go Project
+              shell: bash
+              run: |
+                  mkdir -p output
+                  go build -v -o output/teletowa-windows.exe .
+
+            - name: Run Custom Test Script (Windows)
+              shell: bash
+              run: |
+                  # Pastikan kita berada di root
+                  ls -R scripts/
+
+                  # Hapus karakter \r (CRLF) yang merusak pembacaan interpreter bash
+                  sed -i 's/\r$//' ./scripts/test-windows.sh
+
+                  # Berikan izin eksekusi
+                  chmod +x ./scripts/test-windows.sh
+
+                  # Jalankan dengan pemanggilan bash eksplisit untuk menghindari error 127
+                  bash ./scripts/test-windows.sh
+
+            - name: Upload artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: teletowa-windows-${{ strategy.job-index }}
+                  path: output/teletowa-windows.exe
+                  retention-days: 1
+
+    merge-release-artifacts:
+        needs: [build-ubuntu, build-windows]
+        runs-on: ubuntu-24.04
+        timeout-minutes: 10
+
+        steps:
+            - name: Download all binary artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  pattern: teletowa-*
+                  merge-multiple: true
+                  path: merged-artifacts
+
+            - name: Upload merged binaries
+              uses: actions/upload-artifact@v4
+              with:
+                  name: teletowa-binaries
+                  path: merged-artifacts/

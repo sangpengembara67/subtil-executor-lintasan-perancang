@@ -1,0 +1,456 @@
+{{ define "whatsapp/panelchat.html" }}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #25D366;
+            --secondary-color: #128C7E;
+            --accent-color: #075E54;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 50%, #075E54 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .glass-effect {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .btn-gradient {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, #128C7E, #075E54);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <nav class="glass-effect text-white shadow-2xl">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-wrap items-center justify-between">
+                <a class="text-xl font-bold bg-gradient-to-r from-white to-green-200 bg-clip-text text-transparent" href="/">
+                    <i class="fas fa-comments mr-2"></i>TeleTowa
+                </a>
+                <button class="lg:hidden glass-effect border border-white/30 px-3 py-1 rounded-lg hover:bg-white/20 transition-all" type="button" id="mobile-menu-button" aria-label="Tampilkan Menu">
+                    <i class="fas fa-bars text-white"></i>
+                </button>
+                <div class="hidden lg:flex w-full lg:w-auto" id="mobile-menu">
+                    <ul class="flex flex-col lg:flex-row lg:space-x-6 mt-4 lg:mt-0">
+                        <li>
+                            <a class="block px-3 py-2 rounded-lg text-white font-medium hover:bg-white/20 transition-all" href="/">
+                                <i class="fas fa-home mr-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a class="block px-3 py-2 rounded-lg text-white font-medium hover:bg-white/20 transition-all" href="/telegram">
+                                <i class="fab fa-telegram mr-2"></i>Telegram
+                            </a>
+                        </li>
+                        <li>
+                            <a class="block px-3 py-2 rounded-lg text-white font-medium bg-white/30 backdrop-blur-sm" href="/whatsapp">
+                                <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="mt-4 lg:mt-0 lg:ml-auto">
+                        <a href="/logout" class="inline-block px-4 py-2 glass-effect text-white font-medium rounded-lg hover:bg-white/20 transition-all">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <div class="glass-effect rounded-2xl shadow-2xl p-6 mb-8 card-hover">
+            <div class="flex flex-wrap justify-between items-center">
+                <h2 class="text-3xl font-bold text-white flex items-center">
+                    <i class="fab fa-whatsapp mr-3 text-green-400 pulse-animation"></i>
+                    Panel Chat WhatsApp
+                </h2>
+                <a href="/whatsapp" class="px-6 py-3 glass-effect text-white font-medium rounded-lg hover:bg-white/20 transition-all card-hover flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i>Kembali
+                </a>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-2xl shadow-2xl overflow-hidden card-hover">
+            <div id="status-message" class="mb-6 p-4 rounded-xl glass-effect hidden card-hover"></div>
+            
+            <div class="p-6 space-y-6">
+                <!-- Filter and Search Section -->
+                <div class="relative">
+                    <label for="search" class="block text-sm font-medium text-white mb-2">Cari Kontak atau Grup</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-300"></i>
+                        </div>
+                        <input type="text" id="search" class="pl-12 pr-4 py-3 w-full glass-effect text-white placeholder-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all" placeholder="Ketik untuk mencari...">
+                    </div>
+                </div>
+                
+                <!-- Contacts and Groups Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Contacts Section -->
+                    <div class="border border-gray-200 rounded-lg p-4 h-72 overflow-y-auto">
+                        <h3 class="text-xl font-semibold text-white flex items-center glass-effect p-3 rounded-xl mb-3">
+                            <i class="fas fa-user mr-3 text-blue-400 pulse-animation"></i> Kontak Pribadi
+                        </h3>
+                        <div class="space-y-2" id="contacts-list">
+                            {{ range .Chats }}
+                            <div class="flex items-center p-3 hover:bg-gray-50 rounded-md cursor-pointer contact-item transition" data-id="{{ .id }}" data-type="private" data-title="{{ .title }}">
+                                <input type="radio" name="recipient" value="{{ .id }}" id="chat_{{ .id }}" class="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500">
+                                <label for="chat_{{ .id }}" class="flex-1 cursor-pointer">
+                                    <div class="font-medium text-gray-800">{{ .title }}</div>
+                                    <div class="text-xs text-gray-500">{{ .id }}</div>
+                                </label>
+                            </div>
+                            {{ end }}
+                        </div>
+                    </div>
+                    
+                    <!-- Groups Section -->
+                    <div class="border border-gray-200 rounded-lg p-4 h-72 overflow-y-auto">
+                        <h3 class="text-xl font-semibold text-white flex items-center glass-effect p-3 rounded-xl mb-3">
+                            <i class="fas fa-users mr-3 text-green-400 pulse-animation"></i> Grup
+                        </h3>
+                        <div class="space-y-3" id="groups-list">
+                            {{ range .Groups }}
+                            <div class="flex items-center p-3 hover:bg-gray-50 rounded-md cursor-pointer group-item transition" data-id="{{ .id }}" data-type="group" data-title="{{ .title }}">
+                                <input type="radio" name="recipient" value="{{ .id }}" id="group_{{ .id }}" class="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500">
+                                <label for="group_{{ .id }}" class="flex-1 cursor-pointer">
+                                    <div class="font-medium text-gray-800">{{ .title }}</div>
+                                    <div class="text-xs text-gray-500">{{ .id }}</div>
+                                </label>
+                            </div>
+                            {{ end }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Custom WhatsApp Number Section -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-white flex items-center glass-effect p-3 rounded-xl">
+                        <i class="fas fa-phone mr-3 text-yellow-400 pulse-animation"></i>
+                        Atau Gunakan Nomor WhatsApp Kustom
+                    </h3>
+                    <div class="flex space-x-3">
+                        <input type="text" id="custom-number" placeholder="Contoh: 628123456789" class="flex-1 px-4 py-3 glass-effect text-white placeholder-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all">
+                        <button id="use-custom-number" class="px-6 py-3 btn-gradient text-white font-medium rounded-xl hover:scale-105 transition-all card-hover flex items-center">
+                            <i class="fas fa-check mr-2"></i>Gunakan
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-300 mt-2">Gunakan jika nomor tidak ada di daftar kontak</p>
+                </div>
+                
+                <!-- Message Input Section -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-white flex items-center glass-effect p-3 rounded-xl">
+                        <i class="fas fa-comment-dots mr-3 text-blue-400 pulse-animation"></i>
+                        Pesan
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="message" class="block text-sm font-medium text-white mb-2 flex items-center">
+                                <i class="fas fa-edit mr-2 text-blue-300"></i>Pesan
+                            </label>
+                            <textarea id="message" name="message" rows="4" placeholder="Tulis pesan Anda di sini..." class="w-full px-4 py-3 glass-effect text-white placeholder-gray-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none transition-all"></textarea>
+                        </div>
+                        <div>
+                            <label for="quote" class="block text-sm font-medium text-white mb-2 flex items-center">
+                                <i class="fas fa-quote-left mr-2 text-yellow-300"></i>Kutipan <span class="text-red-400">*</span>
+                            </label>
+                            <input type="text" id="quote" name="quote" placeholder="Teks yang ingin dikutip..." class="w-full px-4 py-3 glass-effect text-white placeholder-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all" required>
+                        </div>
+                        <div>
+                            <label for="replyNumber" class="block text-sm font-medium text-white mb-2 flex items-center">
+                                <i class="fas fa-reply mr-2 text-green-300"></i>Nomor Balasan <span class="text-red-400">*</span>
+                            </label>
+                            <input type="number" id="replyNumber" name="replyNumber" placeholder="Nomor pesan yang ingin dibalas..." class="w-full px-4 py-3 glass-effect text-white placeholder-gray-300 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="pt-4">
+                    <button id="send-message-btn" class="w-full btn-gradient text-white font-bold py-4 px-6 rounded-xl hover:scale-105 transition-all card-hover flex items-center justify-center shadow-2xl">
+                        <i class="fas fa-paper-plane mr-3 pulse-animation"></i>
+                        Kirim Pesan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Container -->
+    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            document.getElementById('mobile-menu-button').addEventListener('click', function() {
+                const menu = document.getElementById('mobile-menu');
+                menu.classList.toggle('hidden');
+            });
+
+            // Initialize card hover animations
+            const cards = document.querySelectorAll('.card-hover');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+
+            // Notification system
+            function showNotification(message, type = 'success') {
+                const container = document.getElementById('notification-container');
+                const notification = document.createElement('div');
+                
+                const bgColor = type === 'success' ? 'bg-green-500/90' : 'bg-red-500/90';
+                const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
+                
+                notification.className = `${bgColor} backdrop-blur-sm text-white px-6 py-4 rounded-xl shadow-2xl transform translate-x-full transition-all duration-300 flex items-center space-x-3 border border-white/20`;
+                notification.innerHTML = `
+                    <i class="${icon} text-xl"></i>
+                    <span class="font-medium">${message}</span>
+                `;
+                
+                container.appendChild(notification);
+                
+                // Animate in
+                setTimeout(() => {
+                    notification.classList.remove('translate-x-full');
+                }, 100);
+                
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    notification.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }, 5000);
+            }
+            
+            // Pencarian kontak dan grup
+            const searchInput = document.getElementById('search');
+            const contactItems = document.querySelectorAll('.contact-item');
+            const groupItems = document.querySelectorAll('.group-item');
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                let visibleCount = 0;
+                
+                // Cari di kontak
+                contactItems.forEach(item => {
+                    const title = item.getAttribute('data-title').toLowerCase();
+                    const id = item.getAttribute('data-id').toLowerCase();
+                    
+                    if (title.includes(searchTerm) || id.includes(searchTerm)) {
+                        item.style.display = '';
+                        visibleCount++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                // Cari di grup
+                groupItems.forEach(item => {
+                    const title = item.getAttribute('data-title').toLowerCase();
+                    const id = item.getAttribute('data-id').toLowerCase();
+                    
+                    if (title.includes(searchTerm) || id.includes(searchTerm)) {
+                        item.style.display = '';
+                        visibleCount++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+
+                if (searchTerm && visibleCount === 0) {
+                    showNotification('Tidak ada kontak yang ditemukan', 'error');
+                } else if (searchTerm && visibleCount > 0) {
+                    showNotification(`Ditemukan ${visibleCount} kontak`, 'success');
+                }
+            });
+            
+            // Animasi saat memilih kontak atau grup
+            const radioInputs = document.querySelectorAll('input[type="radio"]');
+            radioInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    document.querySelectorAll('.contact-item, .group-item').forEach(item => {
+                        item.classList.remove('bg-white/20', 'border-green-400');
+                    });
+                    
+                    if (this.checked) {
+                        const selectedItem = this.closest('.contact-item, .group-item');
+                        selectedItem.classList.add('bg-white/20', 'border-green-400');
+                        const contactName = selectedItem.querySelector('label div').textContent;
+                        showNotification(`Kontak ${contactName} dipilih`, 'success');
+                    }
+                });
+            });
+            
+            // Gunakan nomor kustom
+            document.getElementById('use-custom-number').addEventListener('click', function() {
+                const customNumber = document.getElementById('custom-number').value.trim();
+                if (!customNumber) {
+                    showStatusMessage('Silakan masukkan nomor WhatsApp', 'error');
+                    return;
+                }
+                
+                // Uncheck semua radio button yang ada
+                document.querySelectorAll('input[name="recipient"]').forEach(radio => {
+                    radio.checked = false;
+                });
+                
+                document.querySelectorAll('.contact-item, .group-item').forEach(item => {
+                    item.classList.remove('bg-blue-50');
+                });
+                
+                // Simpan nomor kustom sebagai data atribut pada tombol kirim
+                document.getElementById('send-message-btn').setAttribute('data-custom-number', customNumber);
+                
+                showStatusMessage(`Menggunakan nomor kustom: ${customNumber}`, 'success');
+            });
+            
+            // Kirim pesan
+            document.getElementById('send-message-btn').addEventListener('click', function() {
+                const selectedRecipient = document.querySelector('input[name="recipient"]:checked');
+                const customNumber = this.getAttribute('data-custom-number');
+                const message = document.getElementById('message').value.trim();
+                
+                if (!selectedRecipient && !customNumber) {
+                    showStatusMessage('Silakan pilih kontak/grup atau masukkan nomor kustom', 'error');
+                    return;
+                }
+                
+                if (!message) {
+                    showStatusMessage('Silakan masukkan pesan', 'error');
+                    return;
+                }
+                
+                // Persiapkan data untuk dikirim
+                const formData = new FormData();
+                
+                // Tentukan penerima (dari kontak/grup atau nomor kustom)
+                if (selectedRecipient) {
+                    formData.append('recipient', selectedRecipient.value);
+                } else if (customNumber) {
+                    formData.append('recipient', customNumber + '@s.whatsapp.net');
+                }
+                
+                formData.append('message', message);
+                
+                const quote = document.getElementById('quote').value.trim();
+                if (!quote) {
+                    showStatusMessage('Silakan masukkan teks kutipan', 'error');
+                    return;
+                }
+                formData.append('quote', quote);
+                
+                const replyNumber = document.getElementById('replyNumber').value.trim();
+                if (!replyNumber) {
+                    showStatusMessage('Silakan masukkan nomor balasan', 'error');
+                    return;
+                }
+                formData.append('replyNumber', replyNumber);
+                
+                // Tampilkan loading state
+                this.disabled = true;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i> Mengirim...';
+                
+                // Kirim request ke server
+                fetch('/whatsapp/panelchat', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showStatusMessage('Pesan berhasil dikirim!', 'success');
+                        // Reset form
+                        document.getElementById('message').value = '';
+                        document.getElementById('quote').value = '';
+                        document.getElementById('replyNumber').value = '';
+                        // Reset custom number jika digunakan
+                        this.removeAttribute('data-custom-number');
+                        document.getElementById('custom-number').value = '';
+                    } else {
+                        showStatusMessage(data.error || 'Terjadi kesalahan saat mengirim pesan', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showStatusMessage('Terjadi kesalahan saat mengirim pesan', 'error');
+                })
+                .finally(() => {
+                    // Reset button state
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-paper-plane mr-3 pulse-animation"></i> Kirim Pesan';
+                });
+            });
+            
+            // Fungsi untuk menampilkan pesan status (legacy support)
+            function showStatusMessage(message, isError = false) {
+                const type = isError ? 'error' : 'success';
+                showNotification(message, type);
+            }
+            
+            // Make showNotification globally available
+            window.showNotification = showNotification;
+        });
+    </script>
+</body>
+</html>
+{{ end }}

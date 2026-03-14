@@ -1,0 +1,462 @@
+{{ define "telegram/forward-settings.html" }}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <nav class="glass-effect shadow-2xl">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex flex-wrap items-center justify-between">
+                <a class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent" href="/">
+                    <i class="fas fa-paper-plane mr-2"></i>TeleTowa
+                </a>
+                <button class="lg:hidden glass-effect border border-white/30 px-3 py-2 rounded-xl hover:bg-white/10 transition-all" type="button" id="mobile-menu-button" aria-label="Tampilkan Menu">
+                    <i class="fas fa-bars text-white text-lg"></i>
+                </button>
+                <div class="hidden lg:flex w-full lg:w-auto" id="mobile-menu">
+                    <ul class="flex flex-col lg:flex-row lg:space-x-2 mt-4 lg:mt-0">
+                        <li>
+                            <a class="block px-4 py-2 rounded-xl text-white font-medium hover:bg-white/10 transition-all flex items-center" href="/">
+                                <i class="fas fa-home mr-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a class="block px-4 py-2 rounded-xl text-white font-medium bg-white/20 backdrop-blur-sm flex items-center" href="/telegram">
+                                <i class="fab fa-telegram mr-2"></i>Telegram
+                            </a>
+                        </li>
+                        <li>
+                            <a class="block px-4 py-2 rounded-xl text-white font-medium hover:bg-white/10 transition-all flex items-center" href="/whatsapp">
+                                <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="mt-4 lg:mt-0 lg:ml-auto">
+                        <a href="/logout" class="inline-flex items-center px-6 py-2 bg-white/90 text-gray-800 font-semibold rounded-xl hover:bg-white transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-6 py-8 max-w-6xl">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl mb-4 shadow-2xl">
+                <i class="fas fa-share-alt text-white text-3xl"></i>
+            </div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                Pengaturan Forward
+            </h1>
+            <p class="text-xl text-gray-700">Konfigurasi penerusan pesan dari Telegram ke WhatsApp</p>
+        </div>
+        
+        {{ if .Error }}
+        <div class="glass-effect border border-red-200 rounded-2xl p-6 mb-8 card-hover">
+            <div class="flex items-center">
+                <div class="bg-red-500 p-3 rounded-xl mr-4">
+                    <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-red-700 mb-1">Terjadi Kesalahan</h3>
+                    <p class="text-red-600">{{ .Error }}</p>
+                </div>
+            </div>
+        </div>
+        {{ end }}
+
+        {{ if .Success }}
+        <div class="glass-effect border border-green-200 rounded-2xl p-6 mb-8 card-hover">
+            <div class="flex items-center">
+                <div class="bg-green-500 p-3 rounded-xl mr-4">
+                    <i class="fas fa-check-circle text-white text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-green-700 mb-1">Berhasil</h3>
+                    <p class="text-green-600">{{ .Success }}</p>
+                </div>
+            </div>
+        </div>
+        {{ end }}
+
+        <div class="glass-effect rounded-2xl shadow-2xl overflow-hidden mb-8 card-hover">
+            <div class="px-8 py-6 bg-gradient-to-r from-blue-600 to-purple-600">
+                <div class="flex items-center">
+                    <i class="fas fa-wifi text-white text-2xl mr-4"></i>
+                    <h2 class="text-2xl font-bold text-white">Status Koneksi</h2>
+                </div>
+            </div>
+            <div class="p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="glass-effect rounded-2xl p-6 card-hover">
+                        <div class="flex items-center mb-6">
+                            <div class="bg-gradient-to-r from-blue-500 to-cyan-500 p-3 rounded-xl mr-4">
+                                <i class="fab fa-telegram text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                                Telegram
+                            </h3>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="font-semibold text-gray-700">Status:</span> 
+                                {{ if .TelegramConnected }}
+                                    <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
+                                        <i class="fas fa-check-circle mr-2"></i>Terhubung
+                                    </span>
+                                {{ else }}
+                                    <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded-full">
+                                        <i class="fas fa-times-circle mr-2"></i>Tidak Terhubung
+                                    </span>
+                                {{ end }}
+                            </div>
+                            
+                            <div class="bg-gray-50 rounded-xl p-4 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600"><i class="fas fa-user mr-2"></i>Chat Dipilih:</span>
+                                    <span class="font-bold text-blue-600">{{ .SelectedTelegramChats }}</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600"><i class="fas fa-users mr-2"></i>Grup Dipilih:</span>
+                                    <span class="font-bold text-blue-600">{{ .SelectedTelegramGroups }}</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600"><i class="fas fa-broadcast-tower mr-2"></i>Channel Dipilih:</span>
+                                    <span class="font-bold text-blue-600">{{ .SelectedTelegramChannels }}</span>
+                                </div>
+                            </div>
+                            
+                            <a href="/telegram/chats" class="inline-flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
+                                <i class="fas fa-edit mr-3"></i>Kelola Daftar Chat
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-effect rounded-2xl p-6 card-hover">
+                        <div class="flex items-center mb-6">
+                            <div class="bg-gradient-to-r from-green-500 to-emerald-500 p-3 rounded-xl mr-4">
+                                <i class="fab fa-whatsapp text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                                WhatsApp
+                            </h3>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="font-semibold text-gray-700">Status:</span> 
+                                {{ if .WhatsappConnected }}
+                                    <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
+                                        <i class="fas fa-check-circle mr-2"></i>Terhubung
+                                    </span>
+                                {{ else }}
+                                    <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded-full">
+                                        <i class="fas fa-times-circle mr-2"></i>Tidak Terhubung
+                                    </span>
+                                {{ end }}
+                            </div>
+                            
+                            <div class="bg-gray-50 rounded-xl p-4 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600"><i class="fas fa-user mr-2"></i>Chat Dipilih:</span>
+                                    <span class="font-bold text-green-600">{{ .SelectedWhatsappChats }}</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600"><i class="fas fa-users mr-2"></i>Grup Dipilih:</span>
+                                    <span class="font-bold text-green-600">{{ .SelectedWhatsappGroups }}</span>
+                                </div>
+                            </div>
+                            
+                            <a href="/whatsapp/chats" class="inline-flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
+                                <i class="fas fa-edit mr-3"></i>Kelola Daftar Chat
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-effect rounded-2xl shadow-2xl overflow-hidden mb-8 card-hover">
+            <div class="px-8 py-6 bg-gradient-to-r from-green-600 to-emerald-600">
+                <div class="flex items-center">
+                    <i class="fas fa-cogs text-white text-2xl mr-4"></i>
+                    <h2 class="text-2xl font-bold text-white">Pengaturan Forward</h2>
+                </div>
+            </div>
+            <div class="p-8">
+                <form action="/telegram/forward-settings" method="POST">
+                    <div class="glass-effect rounded-xl p-6 mb-6">
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0">
+                                <div class="relative">
+                                    <input type="checkbox" id="forward_active" name="forward_active" {{ if .ForwardActive }}checked{{ end }} class="sr-only">
+                                    <label for="forward_active" class="flex items-center cursor-pointer">
+                                        <div class="relative">
+                                            <div class="w-12 h-6 bg-gray-300 rounded-full shadow-inner transition-colors duration-300 ease-in-out" id="toggle-bg"></div>
+                                            <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300 ease-in-out" id="toggle-dot"></div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
+                                    <i class="fas fa-power-off mr-2"></i>Aktifkan Forward Telegram ke WhatsApp
+                                </h3>
+                                <p class="text-gray-600 leading-relaxed">
+                                    Mengaktifkan opsi ini akan meneruskan semua pesan dari chat Telegram yang dipilih ke WhatsApp secara otomatis.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button type="submit" class="flex-1 btn-gradient px-6 py-4 text-white font-semibold rounded-xl hover:shadow-xl transform hover:scale-105 transition-all">
+                            <i class="fas fa-save mr-3"></i>Simpan Pengaturan
+                        </button>
+                        <a href="/telegram" class="flex-1 glass-effect px-6 py-4 text-gray-700 font-semibold rounded-xl hover:shadow-xl transform hover:scale-105 transition-all text-center">
+                            <i class="fas fa-arrow-left mr-3"></i>Kembali
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="glass-effect rounded-2xl shadow-2xl overflow-hidden">
+            <div class="px-8 py-6 bg-gradient-to-r from-gray-700 to-gray-900">
+                <div class="flex items-center">
+                    <i class="fas fa-history text-white text-2xl mr-4"></i>
+                    <h2 class="text-2xl font-bold text-white">Riwayat Forward</h2>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="bg-gradient-to-r from-gray-50 to-gray-100">
+                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
+                                <i class="fas fa-clock mr-2"></i>Waktu
+                            </th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
+                                <i class="fas fa-paper-plane mr-2"></i>Sumber
+                            </th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
+                                <i class="fas fa-bullseye mr-2"></i>Tujuan
+                            </th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
+                                <i class="fas fa-tag mr-2"></i>Tipe
+                            </th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
+                                <i class="fas fa-info-circle mr-2"></i>Status
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {{ if .ForwardHistory }}
+                            {{ range .ForwardHistory }}
+                            <tr class="hover:bg-gray-50 transition-colors duration-200">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-calendar-alt text-gray-400 mr-2"></i>
+                                        <span class="text-sm font-medium text-gray-900">{{ .timestamp }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="bg-gradient-to-r from-blue-500 to-cyan-500 p-2 rounded-lg mr-3">
+                                            <i class="fab fa-telegram text-white text-sm"></i>
+                                        </div>
+                                        <span class="text-sm font-medium text-gray-900">{{ .source }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="bg-gradient-to-r from-green-500 to-emerald-500 p-2 rounded-lg mr-3">
+                                            <i class="fab fa-whatsapp text-white text-sm"></i>
+                                        </div>
+                                        <span class="text-sm font-medium text-gray-900">{{ .destination }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
+                                        <i class="fas fa-message mr-2"></i>{{ .type }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {{ if .success }}
+                                    <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
+                                        <i class="fas fa-check-circle mr-2"></i>Berhasil
+                                    </span>
+                                    {{ else }}
+                                    <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded-full">
+                                        <i class="fas fa-times-circle mr-2"></i>Gagal
+                                    </span>
+                                    {{ end }}
+                                </td>
+                            </tr>
+                            {{ end }}
+                        {{ else }}
+                            <tr>
+                                <td colspan="5" class="px-6 py-8 text-center">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <div class="bg-gray-100 p-4 rounded-full mb-4">
+                                            <i class="fas fa-inbox text-gray-400 text-2xl"></i>
+                                        </div>
+                                        <p class="text-gray-500 font-medium">Belum ada riwayat forward</p>
+                                        <p class="text-gray-400 text-sm mt-1">Riwayat akan muncul setelah ada pesan yang diteruskan</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {{ end }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Initialize toggle switches
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeToggleSwitches();
+        });
+
+        function initializeToggleSwitches() {
+            const toggles = document.querySelectorAll('input[type="checkbox"]');
+            
+            toggles.forEach(toggle => {
+                updateToggleAppearance(toggle);
+                
+                toggle.addEventListener('change', function() {
+                    updateToggleAppearance(this);
+                });
+            });
+        }
+
+        function updateToggleAppearance(toggle) {
+            const toggleBg = toggle.parentElement.querySelector('#toggle-bg') || toggle.closest('label').querySelector('[id*="toggle-bg"]');
+            const toggleDot = toggle.parentElement.querySelector('#toggle-dot') || toggle.closest('label').querySelector('[id*="toggle-dot"]');
+            
+            if (toggleBg && toggleDot) {
+                if (toggle.checked) {
+                    toggleBg.classList.remove('bg-gray-300');
+                    toggleBg.classList.add('bg-green-500');
+                    toggleDot.classList.add('translate-x-6');
+                } else {
+                    toggleBg.classList.remove('bg-green-500');
+                    toggleBg.classList.add('bg-gray-300');
+                    toggleDot.classList.remove('translate-x-6');
+                }
+            }
+        }
+
+        // WebSocket connection for real-time updates
+        const ws = new WebSocket(`ws://${window.location.host}/ws`);
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'telegramForward') {
+                // Refresh halaman untuk menampilkan data terbaru
+                window.location.reload();
+            }
+        };
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl transform transition-all duration-300 translate-x-full ${
+                type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'
+            }`;
+            
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${
+                        type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'
+                    } mr-3 text-lg"></i>
+                    <span class="font-semibold">${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            // Animate out and remove
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
+{{ end }}

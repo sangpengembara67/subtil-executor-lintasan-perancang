@@ -1,0 +1,614 @@
+{{ define "telegram/chats.html" }}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #3b82f6;
+            --primary-purple: #8b5cf6;
+            --soft-blue: #dbeafe;
+            --soft-purple: #e9d5ff;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, var(--soft-blue) 0%, var(--soft-purple) 100%);
+            animation: gradientShift 8s ease-in-out infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background: linear-gradient(135deg, var(--soft-blue) 0%, var(--soft-purple) 100%); }
+            50% { background: linear-gradient(135deg, var(--soft-purple) 0%, var(--soft-blue) 100%); }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-gradient {
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            transition: all 0.3s ease;
+        }
+        
+        .btn-gradient:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <nav class="glass-effect border-b border-white border-opacity-20 backdrop-blur-xl sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-wrap items-center justify-between">
+                <a class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent" href="/">
+                    <i class="fas fa-paper-plane mr-2"></i>TeleTowa
+                </a>
+                <button class="lg:hidden border border-gray-300 px-3 py-1 rounded-lg hover:bg-gray-100 transition-colors" type="button" id="mobile-menu-button" aria-label="Tampilkan Menu">
+                    <i class="fas fa-bars text-gray-600"></i>
+                </button>
+                <div class="hidden lg:flex w-full lg:w-auto" id="mobile-menu">
+                    <ul class="flex flex-col lg:flex-row lg:space-x-2 mt-4 lg:mt-0">
+                        <li>
+                            <a class="flex items-center px-4 py-2 rounded-lg text-gray-600 font-medium hover:bg-blue-50 hover:text-blue-600 transition-all" href="/">
+                                <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a class="flex items-center px-4 py-2 rounded-lg text-white font-medium btn-gradient" href="/telegram">
+                                <i class="fab fa-telegram mr-2"></i>Telegram
+                            </a>
+                        </li>
+                        <li>
+                            <a class="flex items-center px-4 py-2 rounded-lg text-gray-600 font-medium hover:bg-green-50 hover:text-green-600 transition-all" href="/whatsapp">
+                                <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="mt-4 lg:mt-0 lg:ml-auto">
+                        <a href="/logout" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-all">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
+                <i class="fas fa-comments mr-3"></i>Pilih Chat Telegram
+            </h1>
+            <p class="text-gray-600">Kelola chat pribadi, grup, dan channel Telegram Anda</p>
+        </div>
+        
+        {{ if .Error }}
+        <div class="glass-effect border border-red-200 rounded-xl p-4 mb-6">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
+                <p class="text-red-700 font-medium">{{ .Error }}</p>
+            </div>
+        </div>
+        {{ end }}
+
+        <div class="glass-effect rounded-2xl p-6 mb-8">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
+                <div class="flex flex-wrap items-center gap-4">
+                    <button id="refreshChatsBtn" class="btn-gradient text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh Daftar
+                    </button>
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-lg border border-blue-200">
+                        <p class="text-sm text-gray-700">
+                            <i class="fas fa-check-circle text-blue-500 mr-2"></i>
+                            Dipilih: <span id="selectedCount" class="font-bold text-blue-600">{{ .SelectedCount }}</span> item
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="Cari chat, grup, atau channel..." 
+                               class="w-full sm:w-80 px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-2">
+                        <button id="filterAll" class="px-4 py-2 btn-gradient text-white text-sm font-semibold rounded-full shadow-md hover:shadow-lg transition-all">
+                            <i class="fas fa-globe mr-1"></i>Semua
+                        </button>
+                        <button id="filterPrivate" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-full hover:bg-gray-200 transition-all">
+                            <i class="fas fa-user mr-1"></i>Pribadi
+                        </button>
+                        <button id="filterGroup" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-full hover:bg-gray-200 transition-all">
+                            <i class="fas fa-users mr-1"></i>Grup
+                        </button>
+                        <button id="filterChannel" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-full hover:bg-gray-200 transition-all">
+                            <i class="fas fa-broadcast-tower mr-1"></i>Channel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="allChatsContainer">
+            <div class="glass-effect rounded-2xl shadow-xl overflow-hidden mb-8" id="privateChatsSection">
+                <div class="px-8 py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-white bg-opacity-20 p-2 rounded-lg">
+                            <i class="fas fa-user text-white"></i>
+                        </div>
+                        <h2 class="text-xl font-bold">Chat Pribadi</h2>
+                    </div>
+                    <span class="bg-white text-blue-600 rounded-full px-3 py-1 text-sm font-bold shadow-lg" id="privateCount">{{ len .Chats }}</span>
+                </div>
+                <div class="divide-y divide-gray-100" id="chatsList">
+                    {{ if eq (len .Chats) 0 }}
+                    <div class="p-8 text-center">
+                        <i class="fas fa-comments text-gray-300 text-4xl mb-4"></i>
+                        <p class="text-gray-500 no-results">Tidak ada chat pribadi yang tersedia</p>
+                    </div>
+                    {{ else }}
+                    {{ range .Chats }}
+                    <div class="px-8 py-6 flex items-center justify-between chat-item hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 card-hover" data-id="{{ .id }}" data-type="private" data-title="{{ .title }}">
+                        <div class="flex items-center space-x-4 flex-grow">
+                            <div class="relative">
+                                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-900 text-lg mb-1">{{ .title }}</p>
+                                <p class="text-sm text-gray-500 flex items-center">
+                                    <i class="fas fa-hashtag mr-1 text-xs"></i>{{ .id }}
+                                </p>
+                            </div>
+                        </div>
+                        <label class="inline-flex items-center transform transition-transform hover:scale-110">
+                            <input type="checkbox" class="form-checkbox h-6 w-6 text-blue-600 rounded-lg focus:ring-blue-500 focus:ring-2 shadow-md" {{ if .selected }}checked{{ end }} onchange="toggleChat('{{ .id }}', 'private', this.checked)">
+                        </label>
+                    </div>
+                    {{ end }}
+                    {{ end }}
+                </div>
+            </div>
+
+            <div class="glass-effect rounded-2xl shadow-xl overflow-hidden mb-8" id="groupsSection">
+                <div class="px-8 py-5 bg-gradient-to-r from-green-600 to-emerald-600 text-white flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-white bg-opacity-20 p-2 rounded-lg">
+                            <i class="fas fa-users text-white"></i>
+                        </div>
+                        <h2 class="text-xl font-bold">Grup</h2>
+                    </div>
+                    <span class="bg-white text-green-600 rounded-full px-3 py-1 text-sm font-bold shadow-lg" id="groupCount">{{ len .Groups }}</span>
+                </div>
+                <div class="divide-y divide-gray-100" id="groupsList">
+                    {{ if eq (len .Groups) 0 }}
+                    <div class="p-8 text-center">
+                        <i class="fas fa-users text-gray-300 text-4xl mb-4"></i>
+                        <p class="text-gray-500 no-results">Tidak ada grup yang tersedia</p>
+                    </div>
+                    {{ else }}
+                    {{ range .Groups }}
+                    <div class="px-8 py-6 flex items-center justify-between chat-item hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-300 card-hover" data-id="{{ .id }}" data-type="group" data-title="{{ .title }}">
+                        <div class="flex items-center space-x-4 flex-grow">
+                            <div class="relative">
+                                <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center">
+                                    <i class="fas fa-hashtag text-white text-xs"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-900 text-lg mb-1">{{ .title }}</p>
+                                <p class="text-sm text-gray-500 flex items-center">
+                                    <i class="fas fa-hashtag mr-1 text-xs"></i>{{ .id }}
+                                </p>
+                            </div>
+                        </div>
+                        <label class="inline-flex items-center transform transition-transform hover:scale-110">
+                            <input type="checkbox" class="form-checkbox h-6 w-6 text-green-600 rounded-lg focus:ring-green-500 focus:ring-2 shadow-md" {{ if .selected }}checked{{ end }} onchange="toggleChat('{{ .id }}', 'group', this.checked)">
+                        </label>
+                    </div>
+                    {{ end }}
+                    {{ end }}
+                </div>
+            </div>
+
+            <div class="glass-effect rounded-2xl shadow-xl overflow-hidden mb-8" id="channelsSection">
+                <div class="px-8 py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-white bg-opacity-20 p-2 rounded-lg">
+                            <i class="fas fa-broadcast-tower text-white"></i>
+                        </div>
+                        <h2 class="text-xl font-bold">Channel</h2>
+                    </div>
+                    <span class="bg-white text-purple-600 rounded-full px-3 py-1 text-sm font-bold shadow-lg" id="channelCount">{{ len .Channels }}</span>
+                </div>
+                <div class="divide-y divide-gray-100" id="channelsList">
+                    {{ if eq (len .Channels) 0 }}
+                    <div class="p-8 text-center">
+                        <i class="fas fa-broadcast-tower text-gray-300 text-4xl mb-4"></i>
+                        <p class="text-gray-500 no-results">Tidak ada channel yang tersedia</p>
+                    </div>
+                    {{ else }}
+                    {{ range .Channels }}
+                    <div class="px-8 py-6 flex items-center justify-between chat-item hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 card-hover" data-id="{{ .id }}" data-type="channel" data-title="{{ .title }}">
+                        <div class="flex items-center space-x-4 flex-grow">
+                            <div class="relative">
+                                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                                    <i class="fas fa-broadcast-tower"></i>
+                                </div>
+                                <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center">
+                                    <i class="fas fa-star text-white text-xs"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold text-gray-900 text-lg mb-1">{{ .title }}</p>
+                                <p class="text-sm text-gray-500 flex items-center">
+                                    <i class="fas fa-hashtag mr-1 text-xs"></i>{{ .id }}
+                                </p>
+                            </div>
+                        </div>
+                        <label class="inline-flex items-center transform transition-transform hover:scale-110">
+                            <input type="checkbox" class="form-checkbox h-6 w-6 text-purple-600 rounded-lg focus:ring-purple-500 focus:ring-2 shadow-md" {{ if .selected }}checked{{ end }} onchange="toggleChat('{{ .id }}', 'channel', this.checked)">
+                        </label>
+                    </div>
+                    {{ end }}
+                    {{ end }}
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-effect rounded-2xl p-6 mt-8">
+            <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 gap-4">
+                <a href="/telegram" class="w-full sm:w-auto px-8 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-300 flex items-center justify-center shadow-md hover:shadow-lg transform hover:scale-105">
+                    <i class="fas fa-arrow-left mr-3"></i>Kembali ke Dashboard
+                </a>
+                <button id="saveSelectionBtn" class="w-full sm:w-auto btn-gradient text-white px-8 py-4 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center">
+                    <i class="fas fa-save mr-3"></i>Simpan Pilihan Chat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for better performance
+        let currentFilter = 'all';
+        let currentSearchQuery = '';
+
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Fungsi untuk toggle chat
+        function toggleChat(id, type, isSelected) {
+            const chatItem = document.querySelector(`[data-id="${id}"][data-type="${type}"]`);
+            const checkbox = chatItem ? chatItem.querySelector('input[type="checkbox"]') : null;
+            
+            // Disable checkbox to prevent multiple clicks
+            if (checkbox) checkbox.disabled = true;
+
+            fetch('/telegram/select-chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&action=${isSelected ? 'select' : 'unselect'}`
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    updateSelectedCount(data.selected_chats + data.selected_groups + data.selected_channels);
+                } else {
+                    alert('Gagal mengubah pilihan: ' + (data.error || 'Unknown error'));
+                    // Kembalikan checkbox ke keadaan semula
+                    if (checkbox) {
+                        checkbox.checked = !isSelected;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat memproses permintaan: ' + error.message);
+                // Kembalikan checkbox ke keadaan semula
+                if (checkbox) {
+                    checkbox.checked = !isSelected;
+                }
+            })
+            .finally(() => {
+                // Re-enable checkbox
+                if (checkbox) checkbox.disabled = false;
+            });
+        }
+
+        // Update selected count
+        function updateSelectedCount(count) {
+            const selectedCountElement = document.getElementById('selectedCount');
+            if (selectedCountElement) {
+                selectedCountElement.textContent = count;
+            }
+        }
+
+        // Refresh chats list
+        document.getElementById('refreshChatsBtn').addEventListener('click', function() {
+            window.location.reload();
+        });
+
+        // Save selection button
+        document.getElementById('saveSelectionBtn').addEventListener('click', function() {
+            window.location.href = '/telegram';
+        });
+
+        // WebSocket connection for real-time updates
+        let ws;
+        function initWebSocket() {
+            try {
+                ws = new WebSocket(`ws://${window.location.host}/ws`);
+                
+                ws.onopen = function() {
+                    console.log('WebSocket connected');
+                };
+                
+                ws.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        
+                        if (data.type === 'telegramChatSelected') {
+                            updateSelectedCount(data.selected_chats + data.selected_groups + data.selected_channels);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing WebSocket message:', e);
+                    }
+                };
+                
+                ws.onclose = function() {
+                    console.log('WebSocket disconnected, attempting to reconnect...');
+                    setTimeout(initWebSocket, 3000);
+                };
+                
+                ws.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                };
+            } catch (e) {
+                console.error('Failed to initialize WebSocket:', e);
+            }
+        }
+
+        // Initialize WebSocket
+        initWebSocket();
+
+        // Search and filter functionality
+        const searchInput = document.getElementById('searchInput');
+        const filterAll = document.getElementById('filterAll');
+        const filterPrivate = document.getElementById('filterPrivate');
+        const filterGroup = document.getElementById('filterGroup');
+        const filterChannel = document.getElementById('filterChannel');
+        const privateChatsSection = document.getElementById('privateChatsSection');
+        const groupsSection = document.getElementById('groupsSection');
+        const channelsSection = document.getElementById('channelsSection');
+        
+        // Filter buttons styling function
+        function setActiveFilter(activeButton) {
+            [filterAll, filterPrivate, filterGroup, filterChannel].forEach(button => {
+                if (button === activeButton) {
+                    button.classList.remove('bg-gray-200', 'text-gray-700');
+                    button.classList.add('bg-blue-600', 'text-white');
+                } else {
+                    button.classList.remove('bg-blue-600', 'text-white');
+                    button.classList.add('bg-gray-200', 'text-gray-700');
+                }
+            });
+        }
+
+        // Improved search function with better performance and visibility handling
+        function performSearch() {
+            const query = currentSearchQuery.toLowerCase().trim();
+            const allChatItems = document.querySelectorAll('.chat-item');
+            let visiblePrivate = 0;
+            let visibleGroups = 0;
+            let visibleChannels = 0;
+            
+            // Clear any existing no-results messages first
+            document.querySelectorAll('.no-results-search').forEach(msg => msg.remove());
+            
+            allChatItems.forEach(item => {
+                const title = (item.getAttribute('data-title') || '').toLowerCase();
+                const id = (item.getAttribute('data-id') || '').toLowerCase();
+                const type = item.getAttribute('data-type');
+                
+                // Check if matches search query (search in both title and ID)
+                const matchesSearch = query === '' || 
+                    title.includes(query) || 
+                    id.includes(query) ||
+                    title.replace(/\s+/g, '').includes(query.replace(/\s+/g, ''));
+                
+                // Check if matches current filter
+                const matchesFilter = currentFilter === 'all' || 
+                    (currentFilter === 'private' && type === 'private') ||
+                    (currentFilter === 'group' && type === 'group') ||
+                    (currentFilter === 'channel' && type === 'channel');
+                
+                const shouldShow = matchesSearch && matchesFilter;
+                
+                if (shouldShow) {
+                    item.style.display = 'flex';
+                    item.classList.remove('hidden');
+                    
+                    // Count visible items
+                    if (type === 'private') visiblePrivate++;
+                    else if (type === 'group') visibleGroups++;
+                    else if (type === 'channel') visibleChannels++;
+                } else {
+                    item.style.display = 'none';
+                    item.classList.add('hidden');
+                }
+            });
+            
+            // Show/hide sections based on filter and update counters
+            updateSectionVisibility(visiblePrivate, visibleGroups, visibleChannels);
+            
+            // Handle no results messages
+            handleNoResults('#chatsList', visiblePrivate, 'chat pribadi');
+            handleNoResults('#groupsList', visibleGroups, 'grup');
+            handleNoResults('#channelsList', visibleChannels, 'channel');
+        }
+
+        // Update section visibility and counters
+        function updateSectionVisibility(visiblePrivate, visibleGroups, visibleChannels) {
+            // Update counters
+            updateCounter('privateCount', visiblePrivate);
+            updateCounter('groupCount', visibleGroups);
+            updateCounter('channelCount', visibleChannels);
+            
+            // Show/hide sections based on current filter
+            if (currentFilter === 'all') {
+                privateChatsSection.style.display = visiblePrivate > 0 || document.querySelectorAll('#chatsList .chat-item').length > 0 ? 'block' : 'none';
+                groupsSection.style.display = visibleGroups > 0 || document.querySelectorAll('#groupsList .chat-item').length > 0 ? 'block' : 'none';
+                channelsSection.style.display = visibleChannels > 0 || document.querySelectorAll('#channelsList .chat-item').length > 0 ? 'block' : 'none';
+            } else if (currentFilter === 'private') {
+                privateChatsSection.style.display = 'block';
+                groupsSection.style.display = 'none';
+                channelsSection.style.display = 'none';
+            } else if (currentFilter === 'group') {
+                privateChatsSection.style.display = 'none';
+                groupsSection.style.display = 'block';
+                channelsSection.style.display = 'none';
+            } else if (currentFilter === 'channel') {
+                privateChatsSection.style.display = 'none';
+                groupsSection.style.display = 'none';
+                channelsSection.style.display = 'block';
+            }
+        }
+
+        // Update counter helper function
+        function updateCounter(elementId, count) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = count;
+            }
+        }
+        
+        // Improved handle "tidak ada hasil" messages
+        function handleNoResults(selector, count, itemType) {
+            const container = document.querySelector(selector);
+            if (!container) return;
+            
+            let noResultsMsg = container.querySelector('.no-results-search');
+            
+            if (count === 0) {
+                // Only show message if there are items in this category but none visible
+                const totalItemsInCategory = container.querySelectorAll('.chat-item').length;
+                
+                if (totalItemsInCategory > 0) {
+                    if (!noResultsMsg) {
+                        noResultsMsg = document.createElement('div');
+                        noResultsMsg.className = 'p-6 text-gray-500 no-results-search text-center';
+                        container.appendChild(noResultsMsg);
+                    }
+                    
+                    // Set appropriate message based on search or filter
+                    if (currentSearchQuery.trim()) {
+                        noResultsMsg.textContent = `Tidak ada ${itemType} yang cocok dengan pencarian "${currentSearchQuery}"`;
+                    } else {
+                        noResultsMsg.textContent = `Tidak ada ${itemType} yang sesuai dengan filter`;
+                    }
+                    noResultsMsg.style.display = 'block';
+                }
+            } else if (noResultsMsg) {
+                noResultsMsg.style.display = 'none';
+            }
+        }
+        
+        // Filter event listeners
+        filterAll.addEventListener('click', function() {
+            currentFilter = 'all';
+            setActiveFilter(filterAll);
+            performSearch();
+        });
+        
+        filterPrivate.addEventListener('click', function() {
+            currentFilter = 'private';
+            setActiveFilter(filterPrivate);
+            performSearch();
+        });
+        
+        filterGroup.addEventListener('click', function() {
+            currentFilter = 'group';
+            setActiveFilter(filterGroup);
+            performSearch();
+        });
+        
+        filterChannel.addEventListener('click', function() {
+            currentFilter = 'channel';
+            setActiveFilter(filterChannel);
+            performSearch();
+        });
+        
+        // Search input handler with debounce for better performance
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            currentSearchQuery = this.value;
+            
+            // Clear previous timeout
+            clearTimeout(searchTimeout);
+            
+            // Debounce search for better performance
+            searchTimeout = setTimeout(() => {
+                performSearch();
+            }, 150);
+        });
+
+        // Clear search button functionality
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                currentSearchQuery = '';
+                performSearch();
+            }
+        });
+
+        // Initialize with default state
+        document.addEventListener('DOMContentLoaded', function() {
+            currentFilter = 'all';
+            currentSearchQuery = '';
+            setActiveFilter(filterAll);
+            performSearch();
+        });
+    </script>
+</body>
+</html>
+{{ end }}

@@ -1,0 +1,8 @@
+{
+  "server_addr": ":8080",
+  "telegram_token": "",
+  "whatsapp_config": "./data/whatsapp.json",
+  "admin_username": "admin",
+  "admin_password": "shiina",
+  "phone_owner": "6282179438863"
+}

@@ -1,0 +1,191 @@
+{{ define "telegram/login.html" }}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #3b82f6;
+            --primary-blue-dark: #2563eb;
+            --secondary-purple: #8b5cf6;
+            --accent-teal: #06b6d4;
+            --soft-gray: #f8fafc;
+            --warm-gray: #64748b;
+            --light-gray: #e2e8f0;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, 
+                rgba(59, 130, 246, 0.05) 0%, 
+                rgba(139, 92, 246, 0.05) 25%,
+                rgba(6, 182, 212, 0.05) 50%,
+                rgba(59, 130, 246, 0.05) 75%,
+                rgba(139, 92, 246, 0.05) 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .input-focus {
+            transition: all 0.3s ease;
+        }
+        
+        .input-focus:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.2);
+        }
+        
+        .btn-gradient {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-purple) 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, var(--primary-blue-dark) 0%, var(--secondary-purple) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <nav class="glass-effect border-b border-white border-opacity-20 backdrop-blur-xl sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-wrap items-center justify-between">
+                <a class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent" href="/">
+                    <i class="fas fa-paper-plane mr-2"></i>TeleTowa
+                </a>
+                <button class="lg:hidden border border-gray-300 px-3 py-1 rounded-lg hover:bg-gray-100 transition-colors" type="button" id="mobile-menu-button" aria-label="Tampilkan Menu">
+                    <i class="fas fa-bars text-gray-600"></i>
+                </button>
+                <div class="hidden lg:flex w-full lg:w-auto" id="mobile-menu">
+                    <ul class="flex flex-col lg:flex-row lg:space-x-2 mt-4 lg:mt-0">
+                        <li>
+                            <a class="flex items-center px-4 py-2 rounded-lg text-gray-600 font-medium hover:bg-blue-50 hover:text-blue-600 transition-all" href="/">
+                                <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a class="flex items-center px-4 py-2 rounded-lg text-white font-medium btn-gradient" href="/telegram">
+                                <i class="fab fa-telegram mr-2"></i>Telegram
+                            </a>
+                        </li>
+                        <li>
+                            <a class="flex items-center px-4 py-2 rounded-lg text-gray-600 font-medium hover:bg-green-50 hover:text-green-600 transition-all" href="/whatsapp">
+                                <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="mt-4 lg:mt-0 lg:ml-auto">
+                        <a href="/logout" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-all">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <div class="glass-effect rounded-2xl shadow-2xl overflow-hidden">
+            <div class="btn-gradient text-white px-8 py-6">
+                <div class="text-center">
+                    <i class="fab fa-telegram text-4xl mb-3"></i>
+                    <h3 class="text-2xl font-bold">Login Telegram</h3>
+                    <p class="text-blue-100 mt-2">Hubungkan akun Telegram Anda</p>
+                </div>
+            </div>
+            <div class="p-8">
+                {{ if .Error }}
+                <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
+                        <p class="text-red-700 font-medium">{{ .Error }}</p>
+                    </div>
+                </div>
+                {{ end }}
+
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-6 mb-8">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-500 mr-3 mt-1"></i>
+                        <div>
+                            <p class="font-semibold text-gray-800 mb-3">Petunjuk Setup:</p>
+                            <ol class="list-decimal ml-5 space-y-2 text-sm text-gray-700">
+                                <li>Dapatkan API ID dan API Hash dari <a href="https://my.telegram.org/apps" target="_blank" class="text-blue-600 hover:text-blue-800 underline font-medium">https://my.telegram.org/apps</a></li>
+                                <li>Login dengan akun Telegram Anda dan buat aplikasi baru</li>
+                                <li>Masukkan API ID dan API Hash dari aplikasi yang telah Anda buat</li>
+                                <li>Masukkan nomor telepon yang terdaftar di Telegram Anda (format: +6281234567890)</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <form action="/telegram/login" method="POST">
+                    <div class="space-y-6">
+                        <div>
+                            <label for="api_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-key mr-2 text-blue-500"></i>API ID
+                            </label>
+                            <input type="number" class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                id="api_id" name="api_id" value="{{ .ApiID }}" required>
+                        </div>
+                        <div>
+                            <label for="api_hash" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-lock mr-2 text-purple-500"></i>API Hash
+                            </label>
+                            <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                id="api_hash" name="api_hash" value="{{ .ApiHash }}" required>
+                        </div>
+                        <div>
+                            <label for="phone_number" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-phone mr-2 text-green-500"></i>Nomor Telepon
+                            </label>
+                            <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                id="phone_number" name="phone_number" value="{{ .PhoneNumber }}" placeholder="+6281234567890" required>
+                        </div>
+                        <div class="flex items-center p-4 bg-gray-50 rounded-xl">
+                            <input type="checkbox" class="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" 
+                                id="user_mode" name="user_mode" {{ if .UserModeActive }}checked{{ end }}>
+                            <label for="user_mode" class="ml-3 text-sm font-medium text-gray-700">
+                                <i class="fas fa-user-cog mr-2 text-teal-500"></i>Aktifkan Mode User Telegram
+                            </label>
+                        </div>
+
+                        <div class="flex flex-col space-y-4 pt-6">
+                            <button type="submit" class="w-full px-6 py-4 btn-gradient text-white font-semibold rounded-xl transition-all">
+                                <i class="fas fa-save mr-2"></i> Simpan & Lanjutkan
+                            </button>
+                            <a href="/telegram" class="w-full px-6 py-4 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all text-center font-medium">
+                                <i class="fas fa-arrow-left mr-2"></i> Kembali
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>
+{{ end }}

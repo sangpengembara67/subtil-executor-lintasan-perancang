@@ -1,0 +1,27 @@
+{
+  "api_id": 28568230,
+  "api_hash": "3f49b879a736561526f531efbcd691f0",
+  "phone_number": "+6282283281991",
+  "phone_code_hash": "d719b2cb3b6cc4cd45",
+  "user_mode": true,
+  "session_file": "./data/telegram_session.json",
+  "active": true,
+  "status_connected": true,
+  "selected_chats": [
+    "585436187"
+  ],
+  "selected_groups": [
+    "1653193535",
+    "1770089637",
+    "1396699447",
+    "2623386777",
+    "4896615116"
+  ],
+  "selected_channels": [
+    "1653193535",
+    "1770089637",
+    "1396699447",
+    "2623386777",
+    "4896615116"
+  ]
+}

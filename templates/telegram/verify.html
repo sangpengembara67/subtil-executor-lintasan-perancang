@@ -1,0 +1,289 @@
+{{ define "telegram/verify.html" }}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #3b82f6;
+            --primary-blue-dark: #2563eb;
+            --secondary-purple: #8b5cf6;
+            --accent-teal: #06b6d4;
+            --soft-gray: #f8fafc;
+            --warm-gray: #64748b;
+            --light-gray: #e2e8f0;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, 
+                rgba(59, 130, 246, 0.05) 0%, 
+                rgba(139, 92, 246, 0.05) 25%,
+                rgba(6, 182, 212, 0.05) 50%,
+                rgba(59, 130, 246, 0.05) 75%,
+                rgba(139, 92, 246, 0.05) 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .input-focus {
+            transition: all 0.3s ease;
+        }
+        
+        .input-focus:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.2);
+        }
+        
+        .btn-gradient {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-purple) 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, var(--primary-blue-dark) 0%, var(--secondary-purple) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <nav class="glass-effect border-b border-white border-opacity-20 backdrop-blur-xl sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-wrap items-center justify-between">
+                <a class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent" href="/">
+                    <i class="fas fa-paper-plane mr-2"></i>TeleTowa
+                </a>
+                <button class="lg:hidden border border-gray-300 px-3 py-1 rounded-lg hover:bg-gray-100 transition-colors" type="button" id="mobile-menu-button" aria-label="Tampilkan Menu">
+                    <i class="fas fa-bars text-gray-600"></i>
+                </button>
+                <div class="hidden lg:flex w-full lg:w-auto" id="mobile-menu">
+                    <ul class="flex flex-col lg:flex-row lg:space-x-2 mt-4 lg:mt-0">
+                        <li>
+                            <a class="flex items-center px-4 py-2 rounded-lg text-gray-600 font-medium hover:bg-blue-50 hover:text-blue-600 transition-all" href="/">
+                                <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a class="flex items-center px-4 py-2 rounded-lg text-white font-medium btn-gradient" href="/telegram">
+                                <i class="fab fa-telegram mr-2"></i>Telegram
+                            </a>
+                        </li>
+                        <li>
+                            <a class="flex items-center px-4 py-2 rounded-lg text-gray-600 font-medium hover:bg-green-50 hover:text-green-600 transition-all" href="/whatsapp">
+                                <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="mt-4 lg:mt-0 lg:ml-auto">
+                        <a href="/logout" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-all">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 max-w-lg">
+        <div class="glass-effect rounded-2xl shadow-2xl overflow-hidden">
+            <div class="btn-gradient text-white py-6 px-8">
+                <div class="text-center">
+                    <i class="fas fa-shield-alt text-4xl mb-3 pulse-animation"></i>
+                    <h3 class="text-2xl font-bold">Verifikasi Telegram</h3>
+                    <p class="text-blue-100 mt-2">Masukkan kode verifikasi</p>
+                </div>
+            </div>
+            <div class="p-8">
+                {{ if .Error }}
+                <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
+                        <p class="text-red-700 font-medium">{{ .Error }}</p>
+                    </div>
+                </div>
+                {{ end }}
+
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-6 mb-8">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-500 mr-3 mt-1"></i>
+                        <div>
+                            <p class="font-semibold text-gray-800 mb-2">Petunjuk Verifikasi:</p>
+                            <p class="text-gray-700">Kode verifikasi telah dikirim ke akun Telegram Anda. Silakan masukkan kode tersebut di bawah ini untuk menyelesaikan proses autentikasi.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mb-8">
+                    <button id="btnSendCode" class="btn-gradient text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center justify-center mx-auto">
+                        <i class="fas fa-paper-plane mr-2"></i> Kirim Kode Verifikasi
+                    </button>
+                    <div id="codeStatus" class="mt-2"></div>
+                </div>
+
+                <form action="/telegram/login/verify" method="POST" class="space-y-6">
+                    <div>
+                        <label for="verification_code" class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-key mr-2 text-blue-500"></i>Kode Verifikasi
+                        </label>
+                        <input type="text" class="w-full px-4 py-4 border border-gray-300 rounded-xl input-focus text-lg text-center tracking-widest" 
+                            id="verification_code" name="verification_code" placeholder="000000" maxlength="6" required>
+                    </div>
+
+                    <div class="flex flex-col space-y-3 pt-6">
+                        <button type="submit" class="w-full btn-gradient text-white py-4 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center justify-center">
+                            <i class="fas fa-shield-alt mr-2"></i> Verifikasi
+                        </button>
+                        <a href="/telegram/login" class="w-full bg-gray-100 text-gray-700 py-4 px-6 rounded-xl text-center font-semibold hover:bg-gray-200 transition-all transform hover:scale-105 flex items-center justify-center">
+                            <i class="fas fa-arrow-left mr-2"></i> Kembali
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnSendCode = document.getElementById('btnSendCode');
+            const codeStatus = document.getElementById('codeStatus');
+            let retryCount = 0;
+            const maxRetries = 3;
+            let waitTime = 1000; // 1 detik
+
+            // Kirim kode verifikasi otomatis saat halaman dimuat
+            setTimeout(sendVerificationCode, 500);
+
+            btnSendCode.addEventListener('click', function() {
+                retryCount = 0; // Reset counter saat user klik manual
+                waitTime = 1000; // Reset wait time
+                sendVerificationCode();
+            });
+
+            function sendVerificationCode() {
+                btnSendCode.disabled = true;
+                btnSendCode.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Mengirim...';
+                codeStatus.innerHTML = '';
+
+                fetch('/telegram/login/send-code', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        retryCount = 0; // Reset counter pada sukses
+                        codeStatus.innerHTML = '<div class="bg-green-100 border-l-4 border-green-500 p-4 rounded flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i> Kode verifikasi telah dikirim!</div>';
+                    } else {
+                        let errorMsg = data.error || 'Terjadi kesalahan';
+                        let shouldAutoRetry = false;
+                        
+                        // Pesan error yang lebih bersahabat untuk beberapa kasus
+                        if (errorMsg.includes("the Waiter middleware is not running")) {
+                            errorMsg = "Sistem sedang memulai, silakan tunggu sebentar...";
+                            shouldAutoRetry = true;
+                        } else if (errorMsg.includes("FLOOD_WAIT")) {
+                            errorMsg = "Telegram meminta anda menunggu sebentar karena terlalu banyak permintaan. Silakan tunggu beberapa menit dan coba lagi.";
+                        } else if (errorMsg.includes("PHONE_NUMBER_INVALID")) {
+                            errorMsg = "Nomor telepon tidak valid. Pastikan format benar (+6281234xxxxx).";
+                        } else if (errorMsg.includes("API_ID_INVALID")) {
+                            errorMsg = "API ID atau API Hash tidak valid. Periksa kembali di my.telegram.org/apps.";
+                        }
+                        
+                        // Tampilkan pesan error
+                        codeStatus.innerHTML = `
+                            <div class="bg-red-100 border-l-4 border-red-500 p-4 rounded mb-4">
+                                <div class="flex items-center mb-2">
+                                    <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                                    <span class="font-medium text-red-700">Gagal mengirim kode</span>
+                                </div>
+                                <p class="text-red-700 text-sm">${errorMsg}</p>
+                                <p class="text-xs text-gray-600 mt-2">Jika masalah berlanjut, coba kembali ke halaman login dan periksa konfigurasi.</p>
+                            </div>
+                        `;
+
+                        // Coba lagi secara otomatis jika perlu dan belum maksimum retry
+                        if (shouldAutoRetry && retryCount < maxRetries) {
+                            retryCount++;
+                            waitTime *= 2; // Eksponensial backoff
+                            
+                            codeStatus.innerHTML += `
+                                <div class="text-center text-sm mt-2">
+                                    <p>Mencoba lagi dalam ${waitTime/1000} detik... (Percobaan ${retryCount}/${maxRetries})</p>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                                        <div class="bg-blue-600 h-2.5 rounded-full progress-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // Animasi progress bar
+                            const progressBar = codeStatus.querySelector('.progress-bar');
+                            const startTime = Date.now();
+                            
+                            const updateProgress = () => {
+                                const elapsed = Date.now() - startTime;
+                                const progress = Math.min(100, (elapsed / waitTime) * 100);
+                                progressBar.style.width = progress + '%';
+                                
+                                if (elapsed < waitTime) {
+                                    requestAnimationFrame(updateProgress);
+                                }
+                            };
+                            
+                            requestAnimationFrame(updateProgress);
+                            
+                            setTimeout(sendVerificationCode, waitTime);
+                        }
+                    }
+                })
+                .catch(error => {
+                    codeStatus.innerHTML = `
+                        <div class="bg-red-100 border-l-4 border-red-500 p-4 rounded mb-4">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                                <span class="font-medium text-red-700">Terjadi kesalahan</span>
+                            </div>
+                            <p class="text-red-700 text-sm">${error.message || 'Koneksi gagal'}</p>
+                            <p class="text-xs text-gray-600 mt-2">Periksa koneksi internet Anda dan coba lagi.</p>
+                        </div>
+                    `;
+                })
+                .finally(() => {
+                    btnSendCode.disabled = false;
+                    btnSendCode.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Kirim Kode Verifikasi';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+{{ end }}

@@ -1,0 +1,401 @@
+{{ define "whatsapp/login.html" }}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.18);
+        }
+        
+        .gradient-bg {
+            background: var(--primary-gradient);
+        }
+        
+        .glass-effect {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+        }
+        
+        .btn-gradient {
+            background: var(--primary-gradient);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="min-h-screen" data-logged-in="{{ if .LoggedIn }}true{{ else }}false{{ end }}">
+    <nav class="glass-effect text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-wrap items-center justify-between">
+                <a class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent" href="/">
+                    <i class="fas fa-exchange-alt mr-2"></i>TeleTowa
+                </a>
+                <button class="lg:hidden glass-effect border border-white/30 px-3 py-1 rounded-lg hover:bg-white/20 transition-all" type="button" id="mobile-menu-button" aria-label="Tampilkan Menu">
+                    <i class="fas fa-bars text-white"></i>
+                </button>
+                <div class="hidden lg:flex w-full lg:w-auto" id="mobile-menu">
+                    <ul class="flex flex-col lg:flex-row lg:space-x-6 mt-4 lg:mt-0">
+                        <li>
+                            <a class="block px-4 py-2 rounded-lg text-white font-medium hover:bg-white/20 transition-all" href="/">
+                                <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a class="block px-4 py-2 rounded-lg text-white font-medium hover:bg-white/20 transition-all" href="/telegram">
+                                <i class="fab fa-telegram-plane mr-2"></i>Telegram
+                            </a>
+                        </li>
+                        <li>
+                            <a class="block px-4 py-2 rounded-lg text-white font-medium bg-white/30 backdrop-blur-sm" href="/whatsapp">
+                                <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="mt-4 lg:mt-0 lg:ml-auto">
+                        <a href="/logout" class="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm text-white font-medium rounded-lg hover:bg-white/30 transition-all">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 max-w-xl">
+        <div class="mb-6 flex justify-between items-center">
+            <h2 class="text-2xl font-bold text-white">
+                <i class="fab fa-whatsapp mr-3 text-green-400"></i>Login WhatsApp
+            </h2>
+            <a href="/whatsapp" class="px-4 py-2 glass-effect border border-white/30 rounded-lg text-white hover:bg-white/20 transition-all">
+                <i class="fas fa-arrow-left mr-2"></i>Kembali
+            </a>
+        </div>
+        
+        {{ if .LoggedIn }}
+        <!-- Already logged in -->
+        <div class="glass-effect rounded-xl shadow-xl p-6 mb-6 text-center card-hover">
+            <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 pulse-animation">
+                <i class="fas fa-check-circle text-white text-4xl"></i>
+            </div>
+            <h3 class="text-xl font-medium mb-2 text-white">Anda Sudah Login ke WhatsApp</h3>
+            <p class="text-white/80 mb-6">Anda telah berhasil terhubung ke WhatsApp dan siap menggunakan fitur-fiturnya.</p>
+            <div class="flex justify-center space-x-4">
+                <a href="/whatsapp" class="px-6 py-3 btn-gradient text-white rounded-lg font-medium">
+                    <i class="fas fa-tachometer-alt mr-2"></i>Kembali ke Dashboard
+                </a>
+                <a href="/api/whatsapp/logout" class="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Logout WhatsApp
+                </a>
+            </div>
+        </div>
+        {{ else }}
+        <!-- Login with QR Code -->
+        <div class="glass-effect rounded-xl shadow-xl p-6 mb-6 card-hover">
+            <h3 class="text-xl font-medium mb-4 text-center text-white">
+                <i class="fas fa-qrcode mr-3 text-green-400"></i>Scan QR Code untuk Login
+            </h3>
+            <p class="text-white/80 mb-6 text-center">
+                <i class="fas fa-mobile-alt mr-2"></i>
+                Buka WhatsApp di ponsel Anda, pilih Menu atau Pengaturan dan pilih WhatsApp Web untuk memindai kode QR
+            </p>
+            
+            <div id="qr-container" class="flex flex-col items-center justify-center p-4">
+                <div id="qr-loading" class="flex flex-col items-center py-8">
+                    <div class="animate-spin rounded-full h-16 w-16 border-4 border-white/30 border-t-white mb-4"></div>
+                    <p class="text-white/80">Memuat kode QR...</p>
+                </div>
+                <div id="qr-code" class="hidden p-4 glass-effect border-2 border-white/30 rounded-xl">
+                    <img id="qr-image" src="" alt="QR Code WhatsApp" class="w-64 h-64 rounded-lg">
+                </div>
+                <div id="qr-error" class="hidden text-center text-red-400 p-4">
+                    <i class="fas fa-exclamation-circle text-4xl mb-2 pulse-animation"></i>
+                    <p id="error-message" class="text-white">Gagal memuat kode QR</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <button id="refresh-qr" class="px-6 py-3 btn-gradient text-white rounded-lg font-medium hidden">
+                    <i class="fas fa-sync-alt mr-2"></i>Muat Ulang QR Code
+                </button>
+            </div>
+            
+            <div class="mt-6 border-t border-white/20 pt-4">
+                <h4 class="font-medium mb-2 text-center text-white">
+                    <i class="fas fa-wifi mr-2"></i>Status Koneksi
+                </h4>
+                <div id="connection-status" class="text-center text-blue-300 flex items-center justify-center">
+                    <i class="fas fa-hourglass-half mr-2 pulse-animation"></i>
+                    <span class="text-white/80">Menunggu QR Code dipindai...</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="glass-effect rounded-xl shadow-xl p-6 card-hover">
+            <h3 class="text-xl font-medium mb-4 text-white">
+                <i class="fas fa-list-ol mr-3 text-blue-400"></i>Cara Login WhatsApp
+            </h3>
+            <div class="space-y-4">
+                <div class="flex items-start">
+                    <div class="bg-gradient-to-br from-blue-400 to-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-4 flex-shrink-0 font-bold shadow-lg">
+                        1
+                    </div>
+                    <div>
+                        <p class="text-white/90">
+                            <i class="fab fa-whatsapp mr-2 text-green-400"></i>
+                            Buka aplikasi WhatsApp di ponsel Anda
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-start">
+                    <div class="bg-gradient-to-br from-purple-400 to-purple-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-4 flex-shrink-0 font-bold shadow-lg">
+                        2
+                    </div>
+                    <div>
+                        <p class="text-white/90">
+                            <i class="fas fa-cog mr-2 text-gray-300"></i>
+                            Pilih <strong class="text-white">Menu</strong> atau <strong class="text-white">Pengaturan</strong> lalu tap <strong class="text-white">Perangkat Tertaut</strong>
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-start">
+                    <div class="bg-gradient-to-br from-green-400 to-green-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-4 flex-shrink-0 font-bold shadow-lg">
+                        3
+                    </div>
+                    <div>
+                        <p class="text-white/90">
+                            <i class="fas fa-link mr-2 text-blue-300"></i>
+                            Tap <strong class="text-white">Tertaut ke Perangkat</strong>
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-start">
+                    <div class="bg-gradient-to-br from-red-400 to-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center mr-4 flex-shrink-0 font-bold shadow-lg">
+                        4
+                    </div>
+                    <div>
+                        <p class="text-white/90">
+                            <i class="fas fa-camera mr-2 text-yellow-300"></i>
+                            Arahkan ponsel ke layar ini untuk memindai kode QR
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{ end }}
+    </div>
+    
+    <!-- Notification Container -->
+    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    
+    <script>
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'from-green-500 to-green-600' : 
+                           type === 'error' ? 'from-red-500 to-red-600' : 
+                           'from-blue-500 to-blue-600';
+            
+            const icon = type === 'success' ? 'fas fa-check-circle' : 
+                        type === 'error' ? 'fas fa-times-circle' : 
+                        'fas fa-info-circle';
+            
+            notification.className = `glass-effect bg-gradient-to-r ${bgColor} text-white px-6 py-4 rounded-lg shadow-lg transform translate-x-full transition-all duration-300 flex items-center space-x-3`;
+            notification.innerHTML = `
+                <i class="${icon}"></i>
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" class="ml-2 hover:bg-white/20 rounded p-1">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 5000);
+        }
+        
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+        
+        // QR Code functionality
+        let qrInterval;
+        let loginCheckInterval;
+        
+        function loadQRCode() {
+            const qrLoading = document.getElementById('qr-loading');
+            const qrCode = document.getElementById('qr-code');
+            const qrImage = document.getElementById('qr-image');
+            const qrError = document.getElementById('qr-error');
+            const refreshQrBtn = document.getElementById('refresh-qr');
+            const errorMessage = document.getElementById('error-message');
+            
+            // Show loading
+            qrLoading.classList.remove('hidden');
+            qrCode.classList.add('hidden');
+            qrError.classList.add('hidden');
+            refreshQrBtn.classList.add('hidden');
+            
+            // Update button to show loading state
+            const originalContent = refreshQrBtn.innerHTML;
+            refreshQrBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memuat...';
+            refreshQrBtn.classList.add('opacity-60');
+            
+            fetch('/whatsapp/qr')
+                .then(response => response.json())
+                .then(data => {
+                    qrLoading.classList.add('hidden');
+                    refreshQrBtn.innerHTML = originalContent;
+                    refreshQrBtn.classList.remove('opacity-60');
+                    
+                    if (data.qr_code) {
+                        qrImage.src = data.qr_code;
+                        qrCode.classList.remove('hidden');
+                        showNotification('QR Code berhasil dimuat', 'success');
+                        
+                        // Start checking login status
+                        startLoginCheck();
+                        
+                        // Auto refresh QR after 2 minutes
+                        setTimeout(() => {
+                            if (!document.hidden) {
+                                showNotification('QR Code kedaluwarsa, memuat ulang...', 'info');
+                                loadQRCode();
+                            }
+                        }, 120000);
+                    } else if (data.error) {
+                        qrError.classList.remove('hidden');
+                        errorMessage.textContent = data.error;
+                        refreshQrBtn.classList.remove('hidden');
+                        showNotification(data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    qrLoading.classList.add('hidden');
+                    qrError.classList.remove('hidden');
+                    errorMessage.textContent = 'Terjadi kesalahan saat memuat QR code';
+                    refreshQrBtn.classList.remove('hidden');
+                    refreshQrBtn.innerHTML = originalContent;
+                    refreshQrBtn.classList.remove('opacity-60');
+                    showNotification('Terjadi kesalahan saat memuat QR code', 'error');
+                });
+        }
+        
+        // Function to poll login status
+        function startLoginCheck() {
+            const connectionStatus = document.getElementById('connection-status');
+            connectionStatus.innerHTML = '<i class="fas fa-hourglass-half mr-2 pulse-animation"></i> <span class="text-white/80">Menunggu QR Code dipindai...</span>';
+            
+            // Clear any existing interval
+            if (loginCheckInterval) {
+                clearInterval(loginCheckInterval);
+            }
+            
+            // Check status every 3 seconds
+            loginCheckInterval = setInterval(() => {
+                fetch('/whatsapp/login', {
+                    method: 'POST',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        clearInterval(loginCheckInterval);
+                        connectionStatus.innerHTML = '<i class="fas fa-check-circle mr-2 text-green-400"></i> <span class="text-green-400">Login berhasil! Mengalihkan...</span>';
+                        showNotification('Login WhatsApp berhasil!', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/whatsapp';
+                        }, 1500);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking login status:', error);
+                });
+            }, 3000);
+            
+            // Stop polling after 2 minutes
+            setTimeout(() => {
+                if (loginCheckInterval) {
+                    clearInterval(loginCheckInterval);
+                    connectionStatus.innerHTML = '<i class="fas fa-exclamation-triangle mr-2 text-yellow-400"></i> <span class="text-yellow-400">QR Code kedaluwarsa. Silakan muat ulang.</span>';
+                    document.getElementById('refresh-qr').classList.remove('hidden');
+                    showNotification('QR Code kedaluwarsa, silakan muat ulang', 'error');
+                }
+            }, 120000);
+        }
+        
+        // Fetch QR code and manage login status
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if we need to initialize QR code functionality
+            const isLoggedIn = document.body.getAttribute('data-logged-in') === 'true';
+            
+            if (!isLoggedIn) {
+                const refreshQrBtn = document.getElementById('refresh-qr');
+                
+                // Refresh QR code button
+                refreshQrBtn.addEventListener('click', function() {
+                    loadQRCode();
+                });
+                
+                // Initial fetch
+                loadQRCode();
+            }
+        });
+    </script>
+</body>
+</html>
+{{ end }}
