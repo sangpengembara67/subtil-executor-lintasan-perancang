@@ -1,4 +1,4 @@
-# TeleTowa - Aplikasi Integrasi Telegram dan WhatsApp
+# TeleTowa - Aplikasi Integrasi Telegram dan WhatsApp 
 
 TeleTowa adalah aplikasi berbasis Go yang memungkinkan integrasi antara platform Telegram dan WhatsApp untuk pengelolaan pesan.
 
