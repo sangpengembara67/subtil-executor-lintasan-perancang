@@ -16,6 +16,7 @@ jobs:
         timeout-minutes: 50
         runs-on: ${{ matrix.config.os }}
         strategy:
+            fail-fast: false
             matrix:
                 config:
                     - {
@@ -68,6 +69,7 @@ jobs:
         runs-on: ${{ matrix.config.os }}
 
         strategy:
+            fail-fast: false
             matrix:
                 config:
                     - { os: windows-latest }
